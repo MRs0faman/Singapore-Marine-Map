@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SG Marine Map — version 1.2.0 -->
+<!-- SG Marine Map — version 1.3.0 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -78,15 +78,15 @@
   .gpin svg{display:block;}
   .hab-badges{position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);
     display:flex;gap:3px;pointer-events:none;transition:gap .15s ease,bottom .15s ease;}
-  .hab-badge{width:17px;height:17px;border-radius:50%;border:1.5px solid #fff;flex:0 0 auto;
+  .hab-badge{width:20px;height:20px;border-radius:50%;border:1.6px solid #fff;flex:0 0 auto;
     display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(43,61,70,.3);
     transition:width .15s ease,height .15s ease;}
-  .hab-badge svg{width:10px;height:10px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  .hab-badge svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
     transition:width .15s ease,height .15s ease;}
   /* Enlarge the habitat badges when the pin is hovered so they're easy to see. */
   .gpin:hover .hab-badges{gap:5px;bottom:calc(100% + 7px);}
-  .gpin:hover .hab-badge{width:28px;height:28px;}
-  .gpin:hover .hab-badge svg{width:17px;height:17px;}
+  .gpin:hover .hab-badge{width:36px;height:36px;}
+  .gpin:hover .hab-badge svg{width:22px;height:22px;}
   .pin-label{
     position:absolute;left:50%;top:44px;transform:translateX(-50%);
     background:#fff;border:1px solid var(--line);border-radius:8px;
@@ -181,15 +181,15 @@
   .card-nav .back{flex:0 0 auto;width:52px;color:var(--ink-soft);}
 
   /* Legend */
-  .legend{position:absolute;left:18px;bottom:18px;background:var(--card);border:1px solid var(--line);
-    border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);z-index:450;width:210px;}
-  .leg-title{font-weight:600;font-size:.82rem;margin:0 4px 8px;}
-  .leg-row{display:flex;align-items:center;gap:9px;padding:5px 6px;border-radius:9px;cursor:pointer;font-size:.8rem;color:var(--ink);transition:.12s;}
+  .legend{position:absolute;left:20px;bottom:20px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);z-index:450;width:272px;}
+  .leg-title{font-weight:600;font-size:1rem;margin:0 4px 12px;}
+  .leg-row{display:flex;align-items:center;gap:12px;padding:8px 9px;border-radius:11px;cursor:pointer;font-size:.95rem;color:var(--ink);transition:.12s;}
   .leg-row:hover{background:var(--panel);}
   .leg-row.active{background:var(--panel);font-weight:600;}
-  .leg-pin{width:20px;height:20px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
-  .leg-pin svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
-  .leg-all{margin-top:6px;justify-content:center;color:var(--ink-soft);font-size:.76rem;border:1px solid var(--line);}
+  .leg-pin{width:28px;height:28px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .leg-pin svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
+  .leg-all{margin-top:8px;justify-content:center;color:var(--ink-soft);font-size:.85rem;border:1px solid var(--line);padding:9px;}
   .leg-all:hover{border-color:var(--accent);}
   .hchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
   .hchip{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;background:var(--panel);
@@ -862,7 +862,7 @@ const SITES = [
 ];
 
 /* ============================ APP LOGIC ============================ */
-let map, currentSite=null, currentIndex=0, markers=[], activeHabitat=null;
+let map, currentSite=null, currentIndex=0, markers=[], activeHabitat=null, selectedIndex=null;
 
 // Habitat types: colour + a small white icon for each.
 const HABITATS = {
@@ -872,7 +872,7 @@ const HABITATS = {
   mudflat: { label:'Mudflat',            color:'#9a7d50', icon:'<path d="M6.8 15C6.8 12.5 17.2 12.5 17.2 15 17.2 16.8 14.8 17.5 12 17.5 9.2 17.5 6.8 16.8 6.8 15Z"/><path d="M10.2 12.8V11.2M13.8 12.8V11.2"/><circle cx="10.2" cy="10.6" r=".9"/><circle cx="13.8" cy="10.6" r=".9"/><path d="M7.2 14.4C5 13.6 3.9 11.7 4.5 9.9"/><path d="M4.5 9.9 6 10.1M4.5 9.9 4.1 11.4"/><path d="M16.8 14.4C19 13.6 20.1 11.7 19.5 9.9"/><path d="M19.5 9.9 18 10.1M19.5 9.9 19.9 11.4"/><path d="M8 16.4 5.4 17.8M9 17.6 6.8 19.4M16 16.4 18.6 17.8M15 17.6 17.2 19.4"/><path d="M3 20.8h18"/>' },
   sandy:   { label:'Sandy shore',        color:'#d9bd6f', icon:'<circle cx="13.7" cy="9.3" r="0.48" fill="#fff"/><circle cx="12.5" cy="18.4" r="0.54" fill="#fff"/><circle cx="6.8" cy="7.6" r="0.56" fill="#fff"/><circle cx="4.1" cy="10.6" r="0.39" fill="#fff"/><circle cx="4.3" cy="15.3" r="0.55" fill="#fff"/><circle cx="17.6" cy="16.4" r="0.39" fill="#fff"/><circle cx="14.1" cy="12.4" r="0.42" fill="#fff"/><circle cx="17.4" cy="6.8" r="0.38" fill="#fff"/><circle cx="9.9" cy="9.3" r="0.52" fill="#fff"/><circle cx="8.6" cy="18.5" r="0.48" fill="#fff"/><circle cx="6.6" cy="11.9" r="0.48" fill="#fff"/><circle cx="10.1" cy="14.6" r="0.5" fill="#fff"/><circle cx="14.1" cy="4.5" r="0.43" fill="#fff"/><circle cx="10.6" cy="6.2" r="0.56" fill="#fff"/><circle cx="17.2" cy="12.6" r="0.55" fill="#fff"/><circle cx="19.5" cy="10.7" r="0.49" fill="#fff"/>' },
   rocky:   { label:'Rocky shore',        color:'#8593a0', icon:'<path d="M2.5 19.5h19"/><path d="M8.5 19.5C8.5 11.5 19.5 11.5 19.5 19.5Z"/><path d="M2.5 19.5C2.5 14 11 14 11 19.5Z"/><path d="M10.5 19.5C10.5 15.5 17.5 15.5 17.5 19.5Z"/>' },
-  seawall: { label:'Artificial seawall', color:'#6f8fb0', icon:'<path d="M4 8h16v11H4z"/><path d="M4 13.5h16M9.5 8v5.5M14.5 13.5V19"/>' },
+  seawall: { label:'Artificial seawall', color:'#6f8fb0', icon:'<path d="M8 19L16 9H20.5"/><path d="M20.5 9V19"/><path d="M10.8 16.6 11.8 15.4M12.9 14 13.9 12.8M15 11.5 16 10.3"/><path d="M2 19.5h19"/><path d="M2 14.6c1.3-1 2.6 1 3.9 0s2.6-1 3.9 0"/><path d="M2 17c1.3-1 2.6 1 3.9 0s2.6-1 3.9 0"/>' },
   intertidal:{ label:'Intertidal zone', color:'#3fb0c0', icon:'<path d="M3 9.5c2-1.3 4 1.3 6 0s4-1.3 6 0 4 1.3 6 0"/><path d="M3 12.7c2-1.3 4 1.3 6 0s4-1.3 6 0 4 1.3 6 0"/><path d="M3 16.2h18"/>' }
 };
 
@@ -920,6 +920,13 @@ function initMap(){
   // Fit the whole of Singapore + the southern marine sites in view.
   map.on('load',()=>{ map.fitBounds([[103.60,1.15],[104.02,1.46]],{padding:40,duration:0}); });
 
+  // Click on empty map (a real click, not a drag-to-pan, and not a pin):
+  // first deselects a selected site (closing its panel), otherwise clears an active habitat filter.
+  map.on('click',()=>{
+    if(selectedIndex!==null){ closePanel(); }
+    else if(activeHabitat){ toggleHabitat(null); }
+  });
+
   markers = [];
   SITES.forEach((site,i)=>{
     const el = document.createElement('div');
@@ -927,7 +934,7 @@ function initMap(){
     const label = site.name.split('(')[0].trim();
     const badges = (site.habitats||[]).map(habBadge).join('');
     el.innerHTML = `<div class="gpin"><div class="hab-badges">${badges}</div>${RED_PIN}<div class="pin-label">${label}</div></div>`;
-    el.addEventListener('click',()=>openPanel(i));
+    el.addEventListener('click',(e)=>{ e.stopPropagation(); openPanel(i); });
     new maplibregl.Marker({element:el,anchor:'bottom'})
       .setLngLat([site.coords[1],site.coords[0]]).addTo(map);
     markers.push({el, habitats: site.habitats || []});
@@ -947,13 +954,20 @@ function buildLegend(){
   html += `<div class="leg-row leg-all" onclick="toggleHabitat(null)">Show all habitats</div>`;
   document.getElementById('habLegend').innerHTML = html;
 }
+// Decide each pin's visibility: a selected site isolates itself; otherwise the habitat filter applies.
+function refreshMarkers(){
+  markers.forEach((m,idx)=>{
+    let on, clickable;
+    if(selectedIndex!==null){ on = (idx===selectedIndex); clickable = true; }       // selecting a site fades the others (still clickable to switch)
+    else if(activeHabitat){ on = m.habitats.includes(activeHabitat); clickable = on; }
+    else { on = true; clickable = true; }
+    m.el.style.opacity = on ? '1' : '0.22';
+    m.el.style.pointerEvents = clickable ? 'auto' : 'none';
+  });
+}
 function toggleHabitat(k){
   activeHabitat = (k && activeHabitat===k) ? null : k;
-  markers.forEach(m=>{
-    const on = !activeHabitat || m.habitats.includes(activeHabitat);
-    m.el.style.opacity = on ? '1' : '0.22';
-    m.el.style.pointerEvents = on ? 'auto' : 'none';
-  });
+  refreshMarkers();
   document.querySelectorAll('#habLegend .leg-row').forEach(r=>{
     r.classList.toggle('active', r.dataset.hab===activeHabitat);
   });
@@ -962,6 +976,7 @@ function toggleHabitat(k){
 /* ---- Site panel ---- */
 function openPanel(i){
   currentSite = SITES[i];
+  selectedIndex = i;
   document.getElementById('panelKicker').textContent = 'Marine Site';
   document.getElementById('panelTitle').textContent = currentSite.name;
   document.getElementById('panelDesc').textContent = currentSite.blurb;
@@ -982,9 +997,10 @@ function openPanel(i){
     box.appendChild(el);
   });
   document.getElementById('panel').classList.add('open');
+  refreshMarkers();
   if(map){ map.easeTo({center:[currentSite.coords[1],currentSite.coords[0]],duration:600}); }
 }
-function closePanel(){ document.getElementById('panel').classList.remove('open'); }
+function closePanel(){ document.getElementById('panel').classList.remove('open'); selectedIndex=null; refreshMarkers(); }
 
 /* ---- Species card ---- */
 function openCard(idx){
