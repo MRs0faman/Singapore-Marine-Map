@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SG Marine Map — version 2.1.2 -->
+<!-- SG Marine Map — version 2.2.0 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -188,23 +188,67 @@
     font-size:.92rem;line-height:1.55;}
   .funfact b{color:var(--coral);}
 
-  /* Trophic — two linked food chains */
+  /* Trophic — expandable food-chain panel (plain view -> scientific view) */
   .trophic{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
-  .tro-head{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:8px;}
-  .tro-intro{font-size:.86rem;color:var(--ink-soft);line-height:1.55;margin:0 0 16px;}
-  .tro-intro b{color:var(--ink);font-weight:600;}
-  .tro-chainlabel{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:700;margin:0 2px 8px;}
-  .tro-pyr{display:flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:16px;}
-  .tro-row{height:38px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:#e9edf1;color:var(--ink-soft);opacity:.5;text-align:center;padding:0 10px;overflow:hidden;transition:.15s;}
-  .tro-row.active{opacity:1;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:var(--shadow);}
-  .tro-row b{font-size:.82rem;font-weight:600;line-height:1.05;}
-  .tro-row span{font-size:.66rem;line-height:1.05;opacity:.92;}
-  .tro-detrital{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fafcfc;opacity:.5;transition:.15s;}
-  .tro-detrital.active{opacity:1;border-color:var(--accent-2);background:var(--panel);}
-  .tro-recyc b{display:block;font-size:.9rem;color:var(--ink);}
-  .tro-recyc span{font-size:.76rem;color:var(--ink-soft);line-height:1.45;}
-  .tro-key{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft);line-height:1.6;}
+  .tro-head{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:10px;}
+
+  /* The whole panel is one <details>; the summary is the plain-language view. */
+  .tro-panel{background:#fff;border:1px solid #cfe3ea;border-radius:14px;overflow:hidden;transition:.15s;}
+  .tro-panel[open]{border-color:var(--accent);box-shadow:var(--shadow);}
+  .tro-panel.detr{border-color:#ddd0b6;}
+  .tro-panel.detr[open]{border-color:#c1a67a;}
+  .tro-panel summary{display:block;list-style:none;cursor:pointer;padding:14px 15px 11px;transition:.15s;}
+  .tro-panel summary::-webkit-details-marker{display:none;}
+  .tro-panel summary:hover{background:var(--panel);}
+  .tro-chainlabel{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:700;margin-bottom:10px;}
+
+  /* Collapsed: small unlabelled pyramid with the species' own tier lit up. */
+  .tro-mini{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .tro-bar{height:14px;border-radius:4px;background:#e9edf1;transition:.15s;}
+  .tro-bar.on{background:linear-gradient(90deg,var(--accent),var(--accent-2));height:17px;box-shadow:0 2px 7px rgba(79,157,181,.35);}
+  .tro-mini.detr .tro-bar{width:78%;background:#f0e7d8;}
+  .tro-mini.detr .tro-bar.on{background:#e6c99a;box-shadow:0 2px 7px rgba(193,166,122,.4);}
+  .tro-up{color:#c1a67a;font-size:.8rem;line-height:1;font-weight:700;}
+  .tro-name{font-size:.92rem;font-weight:600;color:var(--ink);text-align:center;margin-top:11px;}
+  .tro-desc{font-size:.8rem;color:var(--ink-soft);line-height:1.5;text-align:center;margin-top:4px;}
+  .tro-more{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:11px;padding-top:9px;
+    border-top:1px solid var(--line);font-size:.74rem;color:var(--accent);font-weight:600;}
+  .tro-panel.detr .tro-more{color:#a8853f;}
+  .tro-chev{display:inline-block;transition:transform .18s;}
+  .tro-panel[open] .tro-chev{transform:rotate(180deg);}
+  .tro-panel[open] .tro-more .lbl-shut{display:none;}
+  .tro-more .lbl-open{display:none;}
+  .tro-panel[open] .tro-more .lbl-open{display:inline;}
+
+  /* Expanded scientific view. */
+  .tro-sci{padding:0 15px 15px;}
+  .tro-scale{display:grid;grid-template-columns:28px 1fr;gap:9px;margin-bottom:14px;}
+  .tro-axis{position:relative;}
+  .tro-axis-line{position:absolute;left:14px;top:10px;bottom:10px;width:1px;background:#cfe3ea;}
+  .tro-tick{position:absolute;left:3px;transform:translateY(-50%);font-size:.7rem;color:var(--ink-soft);
+    background:#fff;padding:0 3px;font-weight:600;}
+  .tro-dot{position:absolute;left:7px;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;
+    background:var(--coral);border:2px solid #fff;box-shadow:0 1px 5px rgba(43,61,70,.3);}
+  .tro-rows{position:relative;}
+  .tro-row{position:absolute;left:0;height:28px;border-radius:6px;display:flex;align-items:center;
+    padding:0 10px;background:#e9edf1;color:var(--ink-soft);font-size:.78rem;overflow:hidden;white-space:nowrap;}
+  .tro-row.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;font-weight:600;}
+  .tro-exp-body{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 13px;}
+  .tro-lvhead{font-size:.84rem;font-weight:600;color:var(--ink);margin-bottom:7px;}
+  .tro-exp-body p{font-size:.79rem;color:var(--ink-soft);line-height:1.55;margin:0 0 9px;}
+  .tro-exp-body p b{color:var(--ink);font-weight:600;}
+  .tro-formula{font-size:.79rem;background:#fff;border:1px solid var(--line);border-radius:7px;
+    padding:8px 10px;color:var(--ink);margin-bottom:9px;}
+  .tro-work{font-size:.79rem;line-height:1.65;color:var(--ink-soft);}
+  .tro-work b{color:var(--ink);font-weight:600;}
+  .tro-work .eq{background:#eaf4f2;border-radius:5px;padding:1px 6px;font-weight:700;color:var(--ink);white-space:nowrap;}
+
+  /* Detrital chain diagram in the expanded view. */
+  .tro-dchain{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:14px;}
+  .tro-dstep{width:88%;border-radius:6px;background:#f0e7d8;padding:8px 11px;font-size:.78rem;color:var(--ink);}
+  .tro-dstep.on{background:#e6c99a;font-weight:600;}
+  .tro-dstep span{display:block;font-size:.71rem;color:var(--ink-soft);font-weight:400;margin-top:1px;}
+  .tro-key{margin-top:12px;font-size:.73rem;color:var(--ink-soft);line-height:1.6;}
 
   .card-nav{display:flex;gap:10px;margin-top:22px;}
   .card-nav button{flex:1;border:1px solid var(--line);background:var(--panel);border-radius:12px;
@@ -1105,33 +1149,120 @@ function closePanel(){
   }
 }
 
-/* ---- Trophic (food-web) pyramid ---- */
+/* ---- Trophic (food-chain) panel ----
+   One expandable panel per species. The summary is the plain-language view for
+   newcomers; opening it reveals the scientific view (levels, formula, worked math).
+   A species is either on the grazing pyramid OR in the detrital chain, never both,
+   so exactly one panel renders. */
 const TIERS = [
-  {key:'apex',      label:'Apex predator',      sub:'top of the food chain'},
-  {key:'tertiary',  label:'Tertiary consumer',  sub:'eats other carnivores'},
-  {key:'secondary', label:'Secondary consumer', sub:'eats primary consumers'},
-  {key:'primary',   label:'Primary consumer',   sub:'eats producers & plankton'},
-  {key:'producer',  label:'Producer',           sub:'makes food from sunlight'}
+  {key:'apex',      label:'Apex predator',      lv:5},
+  {key:'tertiary',  label:'Tertiary consumer',  lv:4},
+  {key:'secondary', label:'Secondary consumer', lv:3},
+  {key:'primary',   label:'Primary consumer',   lv:2},
+  {key:'producer',  label:'Producer',           lv:1}
 ];
-const TIER_W = {apex:48,tertiary:61,secondary:74,primary:87,producer:100};
+const TIER_W = {apex:38,tertiary:52,secondary:66,primary:81,producer:95};
+const MINI_W = {apex:32,tertiary:47,secondary:62,primary:77,producer:92};
+// Plain-language, one line each — what this tier means without ecology jargon.
+const TIER_PLAIN = {
+  apex:      'Sits at the very top of the chain — almost nothing hunts it.',
+  tertiary:  'A hunter that eats other hunters, high up the chain.',
+  secondary: 'Eats the plant-eaters, and sometimes plants too.',
+  primary:   'Eats plants and algae directly, one step above the producers.',
+  producer:  'Makes its own food from sunlight, feeding everything above it.'
+};
+const ROW_H = 28, ROW_GAP = 8, ROW_PITCH = ROW_H + ROW_GAP;
+const fmtLv = x => Number.isInteger(x) ? String(x) : x.toFixed(1);
+const CHEV = '<svg class="tro-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+
 function renderTrophic(sp){
   const t = sp.trophic || {level:3.0,tier:'secondary'};
-  const detrital = t.tier==='detrital';
-  const tierLabel = detrital ? 'recycler' : TIERS.find(x=>x.key===t.tier).label.toLowerCase();
-  const rows = TIERS.map(tier=>{
-    const active = (!detrital && tier.key===t.tier);
-    return `<div class="tro-row${active?' active':''}" style="width:${TIER_W[tier.key]}%"><b>${tier.label}</b><span>${tier.sub}</span></div>`;
-  }).join('');
+  return t.tier==='detrital' ? detritalPanel(sp,t) : grazingPanel(sp,t);
+}
+
+/* Grazing chain: mini pyramid collapsed, full pyramid + maths expanded. */
+function grazingPanel(sp,t){
+  const level = t.level, m = +(level-1).toFixed(1);
+  const tier = TIERS.find(x=>x.key===t.tier) || TIERS[2];
+
+  const mini = TIERS.map(x=>
+    `<div class="tro-bar${x.key===tier.key?' on':''}" style="width:${MINI_W[x.key]}%"></div>`).join('');
+
+  // Rows and the axis dot share one formula (centre = (5-level)*ROW_PITCH + ROW_H/2),
+  // so a fractional level sits proportionally between its two tiers.
+  const centre = lv => ((5 - lv) * ROW_PITCH + ROW_H/2);
+  const rows = TIERS.map(x=>
+    `<div class="tro-row${x.key===tier.key?' active':''}" style="top:${centre(x.lv)-ROW_H/2}px;width:${TIER_W[x.key]}%">${x.label}</div>`).join('');
+  const ticks = TIERS.map(x=>
+    `<div class="tro-tick" style="top:${centre(x.lv)}px">${x.lv}</div>`).join('');
+  const scaleH = 4*ROW_PITCH + ROW_H;
+
+  const worked = t.tier==='producer'
+    ? `It makes its own food from sunlight (photosynthesis), so it eats nothing at all — it sits right at the base, <span class="eq">level 1</span>, feeding everything above it.`
+    : `<b>Its diet:</b> ${sp.diet} Those foods sit at roughly <b>level ${fmtLv(m)}</b>, so adding one step up the chain gives <span class="eq">1 + ${fmtLv(m)} = ${fmtLv(level)}</span>.`;
+
   return `
-    <div class="tro-head">Where it sits in the food web</div>
-    <p class="tro-intro">Every habitat has two food chains that link together — one built on <b>living plants</b> (the pyramid) and one on <b>dead matter</b> (the recyclers). This animal is a <b>${tierLabel}</b>, highlighted below · trophic level ≈ ${t.level.toFixed(1)}.</p>
-    <div class="tro-chainlabel">Grazing food chain — begins with living plants</div>
-    <div class="tro-pyr">${rows}</div>
-    <div class="tro-detrital${detrital?' active':''}">
-      <div class="tro-chainlabel" style="margin-top:0">Detrital food chain — begins with dead matter</div>
-      <div class="tro-recyc"><b>Recyclers</b><span>detritivores &amp; decomposers that break down dead plants and animals, returning nutrients to the producers</span></div>
-    </div>
-    <div class="tro-key">Producers make their own food · Consumers eat other living things · Recyclers break down the dead</div>`;
+    <div class="tro-head">Where it sits in the food chain</div>
+    <details class="tro-panel">
+      <summary>
+        <div class="tro-chainlabel">Grazing chain — starts with living plants</div>
+        <div class="tro-mini">${mini}</div>
+        <div class="tro-name">${tier.label}</div>
+        <div class="tro-desc">${TIER_PLAIN[tier.key]}</div>
+        <div class="tro-more">${CHEV}<span class="lbl-shut">Tap for the science</span><span class="lbl-open">Close</span></div>
+      </summary>
+      <div class="tro-sci">
+        <div class="tro-scale" style="height:${scaleH}px">
+          <div class="tro-axis"><div class="tro-axis-line"></div>${ticks}
+            <div class="tro-dot" style="top:${centre(level).toFixed(1)}px"></div></div>
+          <div class="tro-rows">${rows}</div>
+        </div>
+        <div class="tro-exp-body">
+          <div class="tro-lvhead">Its trophic level is ${fmtLv(level)}</div>
+          <p>A trophic level counts how many steps an organism sits above the plants. <b>Producers</b> (seagrass, algae) are level 1, and each step up the chain adds one. Most animals eat a mix of things, so the answer usually lands on a decimal:</p>
+          <div class="tro-formula">trophic level = 1 + (the average level of everything it eats)</div>
+          <div class="tro-work">${worked}</div>
+        </div>
+        <div class="tro-key">The orange dot on the scale marks its exact level — between two tiers when its diet is mixed.</div>
+      </div>
+    </details>`;
+}
+
+/* Detrital chain: only rendered for species whose tier is 'detrital'. */
+function detritalPanel(sp,t){
+  const level = t.level, m = +(level-1).toFixed(1);
+  return `
+    <div class="tro-head">Where it sits in the food chain</div>
+    <details class="tro-panel detr">
+      <summary>
+        <div class="tro-chainlabel">Detrital chain — starts with dead matter</div>
+        <div class="tro-mini detr">
+          <div class="tro-bar"></div><div class="tro-up">&#8593;</div>
+          <div class="tro-bar on"></div><div class="tro-up">&#8593;</div>
+          <div class="tro-bar"></div>
+        </div>
+        <div class="tro-name">Recycler</div>
+        <div class="tro-desc">Feeds on dead matter and the microbes on it, returning nutrients to the plants.</div>
+        <div class="tro-more">${CHEV}<span class="lbl-shut">Tap for the science</span><span class="lbl-open">Close</span></div>
+      </summary>
+      <div class="tro-sci">
+        <div class="tro-dchain">
+          <div class="tro-dstep">Larger predators<span>hunt the recyclers in turn</span></div>
+          <div class="tro-up">&#8593;</div>
+          <div class="tro-dstep on">Recyclers<span>detritivores and decomposers — this species</span></div>
+          <div class="tro-up">&#8593;</div>
+          <div class="tro-dstep">Dead matter and microbes<span>fallen leaves, dead animals, waste</span></div>
+        </div>
+        <div class="tro-exp-body">
+          <div class="tro-lvhead">Its trophic level is about ${fmtLv(level)}</div>
+          <p>Every habitat runs <b>two food chains side by side</b>. The grazing chain starts with living plants. The detrital chain starts with everything that dies or is left over — and this species belongs to that second chain.</p>
+          <p>Detritus and the microbes growing on it count as roughly level 1, the same as plants, so the same formula still applies:</p>
+          <div class="tro-formula">trophic level = 1 + (the average level of everything it eats)</div>
+          <div class="tro-work"><b>Its diet:</b> ${sp.diet} That works out to roughly <span class="eq">1 + ${fmtLv(m)} &#8776; ${fmtLv(level)}</span>.</div>
+        </div>
+        <div class="tro-key">Recyclers close the loop — the nutrients they release feed the plants that start the grazing chain.</div>
+      </div>
+    </details>`;
 }
 
 /* ---- Species card ---- */
