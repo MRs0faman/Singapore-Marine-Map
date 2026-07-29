@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SG Marine Map — version 2.0.4 -->
+<!-- SG Marine Map — version 2.1.2 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -188,6 +188,24 @@
     font-size:.92rem;line-height:1.55;}
   .funfact b{color:var(--coral);}
 
+  /* Trophic — two linked food chains */
+  .trophic{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
+  .tro-head{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:8px;}
+  .tro-intro{font-size:.86rem;color:var(--ink-soft);line-height:1.55;margin:0 0 16px;}
+  .tro-intro b{color:var(--ink);font-weight:600;}
+  .tro-chainlabel{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:700;margin:0 2px 8px;}
+  .tro-pyr{display:flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:16px;}
+  .tro-row{height:38px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#e9edf1;color:var(--ink-soft);opacity:.5;text-align:center;padding:0 10px;overflow:hidden;transition:.15s;}
+  .tro-row.active{opacity:1;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;box-shadow:var(--shadow);}
+  .tro-row b{font-size:.82rem;font-weight:600;line-height:1.05;}
+  .tro-row span{font-size:.66rem;line-height:1.05;opacity:.92;}
+  .tro-detrital{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fafcfc;opacity:.5;transition:.15s;}
+  .tro-detrital.active{opacity:1;border-color:var(--accent-2);background:var(--panel);}
+  .tro-recyc b{display:block;font-size:.9rem;color:var(--ink);}
+  .tro-recyc span{font-size:.76rem;color:var(--ink-soft);line-height:1.45;}
+  .tro-key{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:.74rem;color:var(--ink-soft);line-height:1.6;}
+
   .card-nav{display:flex;gap:10px;margin-top:22px;}
   .card-nav button{flex:1;border:1px solid var(--line);background:var(--panel);border-radius:12px;
     padding:11px;font-size:.9rem;color:var(--ink);cursor:pointer;font-weight:600;transition:.15s;}
@@ -272,6 +290,7 @@
           <div class="tagrow" id="cardTags"></div>
           <div class="facts" id="cardFacts"></div>
           <div class="funfact" id="cardFun"></div>
+          <div class="trophic" id="cardTrophic"></div>
           <div class="card-nav">
             <button class="back" onclick="closeCard()">←</button>
             <button onclick="prevSpecies()">Previous</button>
@@ -308,7 +327,7 @@ const SITES = [
     habitats:["reef","seagrass","intertidal"],
     blurb:"Singapore's first marine park. Its reefs shelter giant clams, seahorses and more than 200 kinds of sponge.",
     species:[
-      { name:"Fluted Giant Clam", sci:"Tridacna squamosa",
+      { name:"Fluted Giant Clam", sci:"Tridacna squamosa", trophic:{level:2.1,tier:"primary"},
         habitat:"Coral reefs and sandy patches, about 4–6 m deep on the shallow dive trail.",
         diet:"Filters tiny plankton from the water, and gets extra food from algae living inside its body.",
         behaviour:"Stays fixed in one spot; snaps its frilly shell shut if a shadow passes over.",
@@ -316,7 +335,7 @@ const SITES = [
         location:"Sisters' Islands, St John's Island",
         fun:"It can grow up to 40 cm across — the biggest clam in Singapore's waters.",
         media:{type:"",src:""} },
-      { name:"Neptune's Cup Sponge", sci:"Cliona patera",
+      { name:"Neptune's Cup Sponge", sci:"Cliona patera", trophic:{level:2.1,tier:"primary"},
         habitat:"Deeper rocky and silty seabed, around 10–16 m on the deep dive trail.",
         diet:"Filter feeder — pumps seawater through its body to catch tiny food particles.",
         behaviour:"Grows into a giant goblet shape; big enough for a small child to sit in long ago.",
@@ -324,7 +343,7 @@ const SITES = [
         location:"Sisters' Islands and southern waters",
         fun:"It was thought to be extinct worldwide — then rediscovered in Singapore in 2011!",
         media:{type:"",src:""} },
-      { name:"Estuarine Seahorse", sci:"Hippocampus kuda",
+      { name:"Estuarine Seahorse", sci:"Hippocampus kuda", trophic:{level:3,tier:"secondary"},
         habitat:"Calm seagrass meadows where it can hide among the blades.",
         diet:"Sucks up tiny shrimp and plankton through its long snout.",
         behaviour:"Wraps its tail around seagrass to anchor itself against the current.",
@@ -332,7 +351,7 @@ const SITES = [
         location:"Sisters' Islands, Pulau Hantu",
         fun:"It's the dad seahorse that gets pregnant and carries the babies in a pouch.",
         media:{type:"",src:""} },
-      { name:"False Clownfish", sci:"Amphiprion ocellaris",
+      { name:"False Clownfish", sci:"Amphiprion ocellaris", trophic:{level:2.6,tier:"secondary"},
         habitat:"Lives tucked inside the stinging tentacles of a sea anemone.",
         diet:"Nibbles algae, plankton and leftover bits of food.",
         behaviour:"Never strays far from its anemone home; wiggles to keep water flowing over it.",
@@ -340,7 +359,7 @@ const SITES = [
         location:"Southern reefs including Sisters' Islands",
         fun:"A slimy coat lets it live among stinging tentacles without getting hurt.",
         media:{type:"",src:""} },
-      { name:"Hawksbill Turtle", sci:"Eretmochelys imbricata",
+      { name:"Hawksbill Turtle", sci:"Eretmochelys imbricata", trophic:{level:3,tier:"secondary"},
         habitat:"Coral reefs by day; females come ashore on quiet beaches to lay eggs.",
         diet:"Mostly sponges, plus jellyfish and sea anemones.",
         behaviour:"Uses its narrow beak to reach food in reef cracks; travels long distances.",
@@ -356,7 +375,7 @@ const SITES = [
     habitats:["seagrass","sandy","mangrove","rocky","intertidal"],
     blurb:"On Pulau Ubin, where six habitats meet. At low tide the shore fills with sea stars, anemones and crabs.",
     species:[
-      { name:"Common Sea Star", sci:"Archaster typicus",
+      { name:"Common Sea Star", sci:"Archaster typicus", trophic:{level:2.2,tier:"detrital"},
         habitat:"Sandy shores and seagrass in the shallow intertidal zone.",
         diet:"Slides over the sand digesting tiny bits of food and algae beneath it.",
         behaviour:"Buries into damp sand to stay cool and hidden when the tide goes out.",
@@ -364,7 +383,7 @@ const SITES = [
         location:"Chek Jawa and northern shores",
         fun:"If it loses an arm, it can slowly grow a brand new one.",
         media:{type:"",src:""} },
-      { name:"Haddon's Carpet Anemone", sci:"Stichodactyla haddoni",
+      { name:"Haddon's Carpet Anemone", sci:"Stichodactyla haddoni", trophic:{level:2.5,tier:"secondary"},
         habitat:"Sandy lagoons and seagrass, spread out like a colourful carpet.",
         diet:"Stings and catches small animals that drift onto its sticky tentacles.",
         behaviour:"Can pull its whole body under the sand in a flash if disturbed.",
@@ -372,7 +391,7 @@ const SITES = [
         location:"Chek Jawa lagoon",
         fun:"Its 'carpet' can be wider than a dinner plate.",
         media:{type:"",src:""} },
-      { name:"Mangrove Horseshoe Crab", sci:"Carcinoscorpius rotundicauda",
+      { name:"Mangrove Horseshoe Crab", sci:"Carcinoscorpius rotundicauda", trophic:{level:2.4,tier:"detrital"},
         habitat:"Muddy mangrove shores and estuaries.",
         diet:"Small worms and shellfish it digs up from the mud.",
         behaviour:"Ploughs slowly through mud; the young often ride on the mother's back.",
@@ -380,7 +399,7 @@ const SITES = [
         location:"Chek Jawa mangroves",
         fun:"It's a 'living fossil' — its family has looked the same for 400 million years.",
         media:{type:"",src:""} },
-      { name:"Cake Sand Dollar", sci:"Arachnoides placenta",
+      { name:"Cake Sand Dollar", sci:"Arachnoides placenta", trophic:{level:2.1,tier:"detrital"},
         habitat:"Just under the surface of sandy shores.",
         diet:"Filters tiny food particles from the sand.",
         behaviour:"Burrows below the sand, leaving a faint round outline on the surface.",
@@ -388,7 +407,7 @@ const SITES = [
         location:"Chek Jawa sand bars",
         fun:"The white 'coin' you find on beaches is its skeleton after it has died.",
         media:{type:"",src:""} },
-      { name:"Giant Mudskipper", sci:"Periophthalmodon schlosseri",
+      { name:"Giant Mudskipper", sci:"Periophthalmodon schlosseri", trophic:{level:3.2,tier:"secondary"},
         habitat:"Mangrove mudflats between land and sea.",
         diet:"Small crabs, insects and worms.",
         behaviour:"Walks on its fins and can breathe air, staying out of water for a while.",
@@ -404,7 +423,7 @@ const SITES = [
     habitats:["reef"],
     blurb:"A favourite local dive spot. Its reefs are full of colourful nudibranchs, cuttlefish and rays.",
     species:[
-      { name:"Blue-spotted Fantail Ray", sci:"Taeniura lymma",
+      { name:"Blue-spotted Fantail Ray", sci:"Taeniura lymma", trophic:{level:3.4,tier:"tertiary"},
         habitat:"Sandy patches near coral reefs.",
         diet:"Crabs, shrimp and small shellfish it digs from the sand.",
         behaviour:"Rests under ledges by day and glides out to feed.",
@@ -412,7 +431,7 @@ const SITES = [
         location:"Pulau Hantu and southern reefs",
         fun:"The bright blue spots warn others that its tail carries a venomous sting.",
         media:{type:"",src:""} },
-      { name:"Funeral Nudibranch", sci:"Jorunna funebris",
+      { name:"Funeral Nudibranch", sci:"Jorunna funebris", trophic:{level:3,tier:"secondary"},
         habitat:"Reefs and rocky surfaces where its favourite sponges grow.",
         diet:"Eats blue sponges — and even borrows their toxins for defence.",
         behaviour:"Crawls slowly, waving feathery gills on its back.",
@@ -420,7 +439,7 @@ const SITES = [
         location:"Pulau Hantu",
         fun:"Its black-and-white spots make it look just like an Oreo cookie.",
         media:{type:"",src:""} },
-      { name:"Broadclub Cuttlefish", sci:"Sepia latimanus",
+      { name:"Broadclub Cuttlefish", sci:"Sepia latimanus", trophic:{level:3.8,tier:"tertiary"},
         habitat:"Reefs and seagrass edges.",
         diet:"Fish and shrimp, caught with two fast-shooting tentacles.",
         behaviour:"Flashes shifting colours and patterns across its skin to hunt and communicate.",
@@ -428,7 +447,7 @@ const SITES = [
         location:"Pulau Hantu",
         fun:"It can change colour in under a second, even though it's colour-blind.",
         media:{type:"",src:""} },
-      { name:"Copperband Butterflyfish", sci:"Chelmon rostratus",
+      { name:"Copperband Butterflyfish", sci:"Chelmon rostratus", trophic:{level:3.2,tier:"secondary"},
         habitat:"Coral reefs with plenty of nooks and crannies.",
         diet:"Uses its long snout to pick tiny animals from reef cracks.",
         behaviour:"Swims in pairs, gently poking around the coral.",
@@ -444,7 +463,7 @@ const SITES = [
     habitats:["seagrass","reef","intertidal"],
     blurb:"A hidden reef ringed by shipping lanes, yet home to some of Singapore's best seagrass meadows.",
     species:[
-      { name:"Knobbly Sea Star", sci:"Protoreaster nodosus",
+      { name:"Knobbly Sea Star", sci:"Protoreaster nodosus", trophic:{level:2.6,tier:"secondary"},
         habitat:"Seagrass meadows and sandy reef flats.",
         diet:"Feeds on tiny animals and bits of food on the seabed.",
         behaviour:"Moves very slowly on hundreds of tiny tube feet.",
@@ -452,7 +471,7 @@ const SITES = [
         location:"Cyrene Reef, Pulau Semakau",
         fun:"Cyrene is the 'star' spot — around 40 have been counted in recent surveys.",
         media:{type:"",src:""} },
-      { name:"Dugong", sci:"Dugong dugon",
+      { name:"Dugong", sci:"Dugong dugon", trophic:{level:2,tier:"primary"},
         habitat:"Shallow seagrass meadows.",
         diet:"A plant-eater that grazes on seagrass, roots and all.",
         behaviour:"Shy and rarely seen, but leaves winding feeding trails in the meadow.",
@@ -460,7 +479,7 @@ const SITES = [
         location:"Cyrene Reef seagrass meadows",
         fun:"Scientists know dugongs visit Cyrene from the zig-zag trails they leave behind.",
         media:{type:"",src:""} },
-      { name:"Garlic Bread Sea Cucumber", sci:"Holothuria scabra",
+      { name:"Garlic Bread Sea Cucumber", sci:"Holothuria scabra", trophic:{level:2,tier:"detrital"},
         habitat:"Sandy and seagrass seabed.",
         diet:"Swallows sand to digest the tiny scraps of food inside it.",
         behaviour:"Lies quietly on the seabed, slowly sifting through sand.",
@@ -468,7 +487,7 @@ const SITES = [
         location:"Cyrene Reef, Pulau Semakau",
         fun:"It breathes partly through its bottom — its lungs are inside its tail end.",
         media:{type:"",src:""} },
-      { name:"Tape Seagrass", sci:"Enhalus acoroides",
+      { name:"Tape Seagrass", sci:"Enhalus acoroides", trophic:{level:1,tier:"producer"},
         habitat:"Shallow, sheltered, soft-bottomed seabed.",
         diet:"Makes its own food from sunlight, like plants on land.",
         behaviour:"Its long ribbon leaves sway with the tide.",
@@ -484,7 +503,7 @@ const SITES = [
     habitats:["reef","seagrass","mangrove","intertidal"],
     blurb:"Better known for the landfill, but its intertidal shores hide corals, mangroves and rare shells.",
     species:[
-      { name:"Noble Volute", sci:"Cymbiola nobilis",
+      { name:"Noble Volute", sci:"Cymbiola nobilis", trophic:{level:3.3,tier:"secondary"},
         habitat:"Sandy and seagrass shores.",
         diet:"A hunter that wraps its foot around clams and other shellfish.",
         behaviour:"Glides across the sand leaving a shallow trail behind it.",
@@ -492,7 +511,7 @@ const SITES = [
         location:"Pulau Semakau, southern shores",
         fun:"It lays eggs in a neat little capsule shaped like a pagoda.",
         media:{type:"",src:""} },
-      { name:"Fan Worm", sci:"Sabellastarte spectabilis",
+      { name:"Fan Worm", sci:"Sabellastarte spectabilis", trophic:{level:2.1,tier:"primary"},
         habitat:"Attached to rocks and reef among sand.",
         diet:"Filters plankton using its feathery crown.",
         behaviour:"Snaps its feathery fan back into a tube the instant a shadow appears.",
@@ -500,7 +519,7 @@ const SITES = [
         location:"Pulau Semakau, southern reefs",
         fun:"What looks like a flower is actually the worm's breathing-and-feeding crown.",
         media:{type:"",src:""} },
-      { name:"Sunflower Mushroom Coral", sci:"Heliofungia actiniformis",
+      { name:"Sunflower Mushroom Coral", sci:"Heliofungia actiniformis", trophic:{level:2.3,tier:"primary"},
         habitat:"Sandy patches near reefs.",
         diet:"Feeds on plankton and gets energy from algae inside it.",
         behaviour:"Unusual for a coral — it can slowly move itself across the sand.",
@@ -508,7 +527,7 @@ const SITES = [
         location:"Pulau Semakau, southern reefs",
         fun:"With its long tentacles out, it's often mistaken for an anemone.",
         media:{type:"",src:""} },
-      { name:"Estuarine Stonefish", sci:"Synanceia horrida",
+      { name:"Estuarine Stonefish", sci:"Synanceia horrida", trophic:{level:3.9,tier:"tertiary"},
         habitat:"Sits still on sandy and rubbly seabed.",
         diet:"Ambushes small fish and shrimp that swim too close.",
         behaviour:"Stays perfectly still, camouflaged as a lumpy rock.",
@@ -524,7 +543,7 @@ const SITES = [
     habitats:["reef"],
     blurb:"Singapore's southernmost island. Its clear waters hold some of our healthiest coral reefs.",
     species:[
-      { name:"Staghorn Coral", sci:"Acropora sp.",
+      { name:"Staghorn Coral", sci:"Acropora sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Sunny, clear-water reefs.",
         diet:"Gets most of its energy from algae inside it, and catches plankton at night.",
         behaviour:"Grows in fast branching shapes like deer antlers.",
@@ -532,7 +551,7 @@ const SITES = [
         location:"Raffles Lighthouse, southern reefs",
         fun:"A whole coral colony is really thousands of tiny animals called polyps.",
         media:{type:"",src:""} },
-      { name:"Blacktip Reef Shark", sci:"Carcharhinus melanopterus",
+      { name:"Blacktip Reef Shark", sci:"Carcharhinus melanopterus", trophic:{level:4.1,tier:"apex"},
         habitat:"Shallow reef edges and lagoons.",
         diet:"Small reef fish and squid.",
         behaviour:"Cruises the reef edge, usually shy of people.",
@@ -540,7 +559,7 @@ const SITES = [
         location:"Southern reefs near Raffles Lighthouse",
         fun:"You can spot it by the neat black tip on its dorsal fin.",
         media:{type:"",src:""} },
-      { name:"Green Sea Turtle", sci:"Chelonia mydas",
+      { name:"Green Sea Turtle", sci:"Chelonia mydas", trophic:{level:2,tier:"primary"},
         habitat:"Seagrass meadows and coral reefs.",
         diet:"The only mostly plant-eating sea turtle — grazes on seagrass and algae.",
         behaviour:"Comes up for air, then rests on the reef between grazing.",
@@ -548,7 +567,7 @@ const SITES = [
         location:"Southern islands including Raffles Lighthouse",
         fun:"It's named for the greenish colour of its body fat, not its shell.",
         media:{type:"",src:""} },
-      { name:"Titan Triggerfish", sci:"Balistoides viridescens",
+      { name:"Titan Triggerfish", sci:"Balistoides viridescens", trophic:{level:3.2,tier:"secondary"},
         habitat:"Coral reefs with sandy patches.",
         diet:"Crunches sea urchins, shellfish and coral with strong teeth.",
         behaviour:"Fiercely guards its nest — even chasing away divers who get too close.",
@@ -564,7 +583,7 @@ const SITES = [
     habitats:["sandy","seagrass","intertidal"],
     blurb:"A long, gentle low-tide flat on the northern coast. As the water pulls back, sea stars, sand dollars and sea pens appear on the sand.",
     species:[
-      { name:"Cake Sea Star", sci:"Anthenea aspera",
+      { name:"Cake Sea Star", sci:"Anthenea aspera", trophic:{level:2.2,tier:"detrital"},
         habitat:"Sandy and seagrass flats in the shallow intertidal zone.",
         diet:"Scavenges tiny scraps of food and algae on the sand.",
         behaviour:"Rests half-buried and comes out as the tide falls.",
@@ -572,7 +591,7 @@ const SITES = [
         location:"Changi and northern shores",
         fun:"Its plump five-sided body looks just like a little cushion or cake.",
         media:{type:"",src:""} },
-      { name:"Thorny Sea Cucumber", sci:"Colochirus quadrangularis",
+      { name:"Thorny Sea Cucumber", sci:"Colochirus quadrangularis", trophic:{level:2.1,tier:"primary"},
         habitat:"Tucked among seagrass on the intertidal flat.",
         diet:"Filters plankton from the water with feathery tentacles.",
         behaviour:"Wedges itself in the seagrass, waving its tentacles to feed.",
@@ -580,7 +599,7 @@ const SITES = [
         location:"Changi Beach",
         fun:"It's covered in little thorn-like bumps but is completely harmless.",
         media:{type:"",src:""} },
-      { name:"Sea Pen", sci:"Pteroeides sp.",
+      { name:"Sea Pen", sci:"Pteroeides sp.", trophic:{level:2.2,tier:"primary"},
         habitat:"Anchored upright in the soft sandy seabed.",
         diet:"Filters tiny plankton drifting past in the water.",
         behaviour:"Roots into the sand; some can glow when touched at night.",
@@ -588,7 +607,7 @@ const SITES = [
         location:"Changi flats",
         fun:"It's named for its feather-quill shape — and can light up in the dark.",
         media:{type:"",src:""} },
-      { name:"Moon Snail", sci:"Natica sp.",
+      { name:"Moon Snail", sci:"Natica sp.", trophic:{level:3.3,tier:"secondary"},
         habitat:"Sandy shores just under the surface.",
         diet:"Hunts clams, drilling a neat round hole in their shells.",
         behaviour:"Ploughs along under the sand, leaving a raised trail.",
@@ -604,7 +623,7 @@ const SITES = [
     habitats:["mangrove","sandy","seagrass"],
     blurb:"A northeastern park with a mangrove boardwalk and a rich shore — one of the best places in Singapore to spot a wild seahorse.",
     species:[
-      { name:"Estuarine Seahorse", sci:"Hippocampus kuda",
+      { name:"Estuarine Seahorse", sci:"Hippocampus kuda", trophic:{level:3,tier:"secondary"},
         habitat:"Clinging to seagrass and seaweed in calm shallows.",
         diet:"Sucks up tiny shrimp and plankton through its long snout.",
         behaviour:"Anchors with its curly tail so the current can't sweep it away.",
@@ -612,7 +631,7 @@ const SITES = [
         location:"Pasir Ris, Sisters' Islands",
         fun:"Pasir Ris is a favourite spot to find one — and it's the dad who carries the babies.",
         media:{type:"",src:""} },
-      { name:"Eight-armed Sea Star", sci:"Luidia maculata",
+      { name:"Eight-armed Sea Star", sci:"Luidia maculata", trophic:{level:3.3,tier:"secondary"},
         habitat:"Sandy and seagrass shores.",
         diet:"Hunts small animals on the seabed, swallowing them whole.",
         behaviour:"A fast-moving, fragile star that burrows into the sand.",
@@ -620,7 +639,7 @@ const SITES = [
         location:"Pasir Ris, northern shores",
         fun:"Unlike most sea stars it has eight arms — and can be bigger than your face.",
         media:{type:"",src:""} },
-      { name:"Ball Sea Cucumber", sci:"Phyllophorus sp.",
+      { name:"Ball Sea Cucumber", sci:"Phyllophorus sp.", trophic:{level:2.1,tier:"primary"},
         habitat:"Buried in sand and seagrass with only its tentacles showing.",
         diet:"Filters food with a crown of branched, sticky tentacles.",
         behaviour:"Pulls itself in and rolls into a firm little ball when disturbed.",
@@ -628,7 +647,7 @@ const SITES = [
         location:"Pasir Ris",
         fun:"Touch it and it balls up tight — which is exactly how it got its name.",
         media:{type:"",src:""} },
-      { name:"Smooth-coated Otter", sci:"Lutrogale perspicillata",
+      { name:"Smooth-coated Otter", sci:"Lutrogale perspicillata", trophic:{level:4,tier:"apex"},
         habitat:"Mangroves, rivers and coasts.",
         diet:"Mainly fish, plus the occasional crab.",
         behaviour:"Lives in close, playful family groups that hunt together.",
@@ -644,7 +663,7 @@ const SITES = [
     habitats:["rocky","reef"],
     blurb:"A hidden natural rocky headland on Sentosa's western tip, below rare sea cliffs. At low tide it reveals corals, octopus and sea slugs.",
     species:[
-      { name:"Cauliflower Coral", sci:"Pocillopora sp.",
+      { name:"Cauliflower Coral", sci:"Pocillopora sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Sunlit rocky reef flats.",
         diet:"Energy from algae inside it, plus plankton caught at night.",
         behaviour:"Grows in rounded, bumpy branching clumps.",
@@ -652,7 +671,7 @@ const SITES = [
         location:"Tanjong Rimau, southern reefs",
         fun:"Its bumpy branches look just like a head of cauliflower.",
         media:{type:"",src:""} },
-      { name:"Reef Octopus", sci:"Octopus sp.",
+      { name:"Reef Octopus", sci:"Octopus sp.", trophic:{level:3.6,tier:"tertiary"},
         habitat:"Reef crevices and rock pools.",
         diet:"Crabs, shellfish and small fish.",
         behaviour:"Hunts at night; by day it hides and changes colour to blend in.",
@@ -660,7 +679,7 @@ const SITES = [
         location:"Tanjong Rimau, rocky shores",
         fun:"It has three hearts and can squeeze through any gap bigger than its beak.",
         media:{type:"",src:""} },
-      { name:"Pimply Phyllid Nudibranch", sci:"Phyllidiella pustulosa",
+      { name:"Pimply Phyllid Nudibranch", sci:"Phyllidiella pustulosa", trophic:{level:3,tier:"secondary"},
         habitat:"Rocky reef surfaces where sponges grow.",
         diet:"Eats sponges, borrowing their chemicals for defence.",
         behaviour:"Crawls slowly, protected by a nasty taste.",
@@ -668,7 +687,7 @@ const SITES = [
         location:"Tanjong Rimau",
         fun:"Its bumpy pink-and-black skin warns predators that it tastes terrible.",
         media:{type:"",src:""} },
-      { name:"Black Long-spined Sea Urchin", sci:"Diadema setosum",
+      { name:"Black Long-spined Sea Urchin", sci:"Diadema setosum", trophic:{level:2,tier:"primary"},
         habitat:"Rocky reef and seagrass, wedged in crevices.",
         diet:"Grazes algae off the rocks, mostly at night.",
         behaviour:"Waves its long black spines to fend off anything that comes close.",
@@ -684,7 +703,7 @@ const SITES = [
     habitats:["seawall","reef"],
     blurb:"A reclaimed seawall by the ferry terminal that nature quietly took back — corals settled on their own, in more kinds than on many wild reefs.",
     species:[
-      { name:"Brain Coral", sci:"Platygyra sp.",
+      { name:"Brain Coral", sci:"Platygyra sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Settled naturally on the granite seawall.",
         diet:"Algae living inside it, plus plankton.",
         behaviour:"Grows as a sturdy boulder covered in maze-like ridges.",
@@ -692,7 +711,7 @@ const SITES = [
         location:"Tanah Merah seawall",
         fun:"Its winding ridges look exactly like the surface of a brain.",
         media:{type:"",src:""} },
-      { name:"Button Zoanthids", sci:"Zoanthus sp.",
+      { name:"Button Zoanthids", sci:"Zoanthus sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Encrusting the seawall rocks in the shallows.",
         diet:"Plankton, plus algae living inside them.",
         behaviour:"Dozens of tiny polyps open together like a bed of flowers.",
@@ -700,7 +719,7 @@ const SITES = [
         location:"Tanah Merah seawall",
         fun:"Each little 'flower' is a separate animal, all joined at the base.",
         media:{type:"",src:""} },
-      { name:"Sergeant Major", sci:"Abudefduf sp.",
+      { name:"Sergeant Major", sci:"Abudefduf sp.", trophic:{level:2.7,tier:"secondary"},
         habitat:"Shallow reef and seawalls.",
         diet:"Algae, plankton and tiny animals.",
         behaviour:"Swims in busy shoals; males guard patches of purple eggs.",
@@ -708,7 +727,7 @@ const SITES = [
         location:"Tanah Merah, rocky shores",
         fun:"The five dark stripes look like a sergeant's arm stripes — hence the name.",
         media:{type:"",src:""} },
-      { name:"Feather Star", sci:"Crinoidea",
+      { name:"Feather Star", sci:"Crinoidea", trophic:{level:2.2,tier:"primary"},
         habitat:"Perched on coral and seawall rock.",
         diet:"Filters plankton with its many feathery arms.",
         behaviour:"Spreads its arms to feed and can even swim by waving them.",
@@ -724,7 +743,7 @@ const SITES = [
     habitats:["reef","seagrass","rocky","intertidal"],
     blurb:"Calm southern islands with a walkable lagoon at low tide — and a place where giant clams are being brought back from the brink.",
     species:[
-      { name:"Fluted Giant Clam", sci:"Tridacna squamosa",
+      { name:"Fluted Giant Clam", sci:"Tridacna squamosa", trophic:{level:2.1,tier:"primary"},
         habitat:"Coral reef and sandy patches around the islands.",
         diet:"Filters plankton, plus food from algae living inside it.",
         behaviour:"Stays fixed in place; closes its frilly shell if a shadow passes.",
@@ -732,7 +751,7 @@ const SITES = [
         location:"St John's, Sisters' Islands",
         fun:"Once nearly gone from Singapore, giant clams are now raised in tanks and returned to these reefs.",
         media:{type:"",src:""} },
-      { name:"Fiddler Crab", sci:"Uca sp.",
+      { name:"Fiddler Crab", sci:"Uca sp.", trophic:{level:2.1,tier:"detrital"},
         habitat:"Muddy edges of the lagoon and nearby mangroves.",
         diet:"Scoops tiny bits of food from the mud.",
         behaviour:"Males wave one huge colourful claw to attract a mate.",
@@ -740,7 +759,7 @@ const SITES = [
         location:"St John's lagoon",
         fun:"A male's one giant claw can be almost as big as the rest of his body.",
         media:{type:"",src:""} },
-      { name:"Hermit Crab", sci:"Clibanarius sp.",
+      { name:"Hermit Crab", sci:"Clibanarius sp.", trophic:{level:2.2,tier:"detrital"},
         habitat:"Sandy and rocky shores.",
         diet:"Scavenges scraps of food and algae.",
         behaviour:"Carries an empty snail shell as a home, swapping up as it grows.",
@@ -748,7 +767,7 @@ const SITES = [
         location:"St John's, southern islands",
         fun:"When it outgrows its shell it goes 'house-hunting', trying on new ones for size.",
         media:{type:"",src:""} },
-      { name:"Blue Coral", sci:"Heliopora coerulea",
+      { name:"Blue Coral", sci:"Heliopora coerulea", trophic:{level:2.3,tier:"primary"},
         habitat:"Shallow reef flats.",
         diet:"Algae inside it, plus plankton.",
         behaviour:"Slow-growing, forming sturdy long-lived colonies.",
@@ -764,7 +783,7 @@ const SITES = [
     habitats:["mangrove","mudflat"],
     blurb:"A northwest mangrove and mudflat reserve — a maze of breathing roots alive with mudskippers, crabs and hidden shellfish.",
     species:[
-      { name:"Gold-spotted Mudskipper", sci:"Periophthalmus chrysospilos",
+      { name:"Gold-spotted Mudskipper", sci:"Periophthalmus chrysospilos", trophic:{level:2.8,tier:"secondary"},
         habitat:"Mangrove mudflats between land and sea.",
         diet:"Tiny animals and algae on the surface of the mud.",
         behaviour:"Perches on roots and mud, darting to snap up food; it can breathe air.",
@@ -772,7 +791,7 @@ const SITES = [
         location:"Sungei Buloh mudflats",
         fun:"It can flip itself up into the air to catch a passing insect.",
         media:{type:"",src:""} },
-      { name:"Tree-climbing Crab", sci:"Episesarma sp.",
+      { name:"Tree-climbing Crab", sci:"Episesarma sp.", trophic:{level:2.1,tier:"detrital"},
         habitat:"Mangrove trees and the mud around their roots.",
         diet:"Mostly fallen mangrove leaves.",
         behaviour:"Climbs up tree trunks at high tide to stay out of the water.",
@@ -780,7 +799,7 @@ const SITES = [
         location:"Sungei Buloh mangroves",
         fun:"It's a crab that climbs trees to keep dry when the tide rolls in.",
         media:{type:"",src:""} },
-      { name:"Mud Lobster", sci:"Thalassina anomala",
+      { name:"Mud Lobster", sci:"Thalassina anomala", trophic:{level:2.1,tier:"detrital"},
         habitat:"Deep burrows in the mangrove mud.",
         diet:"Sifts food from the mud it digs through.",
         behaviour:"Builds tall volcano-shaped mounds; it is almost never seen itself.",
@@ -788,7 +807,7 @@ const SITES = [
         location:"Sungei Buloh mangroves",
         fun:"You rarely see it, but its chest-high mud 'volcanoes' are all over the mangrove.",
         media:{type:"",src:""} },
-      { name:"Archerfish", sci:"Toxotes jaculatrix",
+      { name:"Archerfish", sci:"Toxotes jaculatrix", trophic:{level:3.2,tier:"secondary"},
         habitat:"Mangrove creeks and estuaries.",
         diet:"Insects it knocks off leaves hanging above the water.",
         behaviour:"Spits a jet of water to shoot down prey above the surface.",
@@ -804,7 +823,7 @@ const SITES = [
     habitats:["rocky","seagrass"],
     blurb:"The last natural rocky shore on Singapore's mainland, below a wooded sea-cliff. Today it's known less for corals than for its sponges, crabs and seagrass.",
     species:[
-      { name:"Hairy Crab", sci:"Pilumnus vespertilio",
+      { name:"Hairy Crab", sci:"Pilumnus vespertilio", trophic:{level:2.4,tier:"detrital"},
         habitat:"Under rocks on the rocky shore.",
         diet:"Scavenges small bits of food and algae.",
         behaviour:"Hides in crevices; its hairy shell traps silt as camouflage.",
@@ -812,7 +831,7 @@ const SITES = [
         location:"Labrador rocky shore",
         fun:"It's covered in shaggy 'hair' that collects mud, hiding it from predators.",
         media:{type:"",src:""} },
-      { name:"Encrusting Sponge", sci:"Porifera",
+      { name:"Encrusting Sponge", sci:"Porifera", trophic:{level:2.1,tier:"primary"},
         habitat:"Rocks and shaded ledges near the low-tide mark.",
         diet:"Filters tiny food by pumping water through its many pores.",
         behaviour:"Sits still, quietly filtering seawater all day.",
@@ -820,7 +839,7 @@ const SITES = [
         location:"Labrador rocky shore",
         fun:"One short survey of this shore found over 100 different kinds of sponge.",
         media:{type:"",src:""} },
-      { name:"Spoon Seagrass", sci:"Halophila ovalis",
+      { name:"Spoon Seagrass", sci:"Halophila ovalis", trophic:{level:1,tier:"producer"},
         habitat:"Sandy patches along the shore.",
         diet:"Makes its own food from sunlight, like plants on land.",
         behaviour:"Spreads tiny paired oval leaves low across the sand.",
@@ -828,7 +847,7 @@ const SITES = [
         location:"Labrador shore",
         fun:"Each little leaf is shaped like a spoon — which is how it got its name.",
         media:{type:"",src:""} },
-      { name:"Nerite Snail", sci:"Nerita sp.",
+      { name:"Nerite Snail", sci:"Nerita sp.", trophic:{level:2,tier:"primary"},
         habitat:"Rocks in the splash zone near the water's edge.",
         diet:"Grazes the film of algae off the rocks.",
         behaviour:"Clamps tightly to the rock to keep from drying out at low tide.",
@@ -844,7 +863,7 @@ const SITES = [
     habitats:["sandy","seagrass","rocky","intertidal"],
     blurb:"A northeastern island linked to Punggol by footbridges. Its Beach A shore has seagrass and sandflats full of crabs, shrimps and hidden fish.",
     species:[
-      { name:"Flower Crab", sci:"Portunus pelagicus",
+      { name:"Flower Crab", sci:"Portunus pelagicus", trophic:{level:3.3,tier:"secondary"},
         habitat:"Sandy shallows and seagrass.",
         diet:"Hunts small fish, shrimp and shellfish.",
         behaviour:"Swims sideways and buries in the sand with just its eyes poking out.",
@@ -852,7 +871,7 @@ const SITES = [
         location:"Coney Island, northern shores",
         fun:"Its back pair of legs are flattened into paddles so it can actually swim.",
         media:{type:"",src:""} },
-      { name:"Snapping Shrimp", sci:"Alpheus sp.",
+      { name:"Snapping Shrimp", sci:"Alpheus sp.", trophic:{level:2.6,tier:"secondary"},
         habitat:"Burrows in sand and among rubble.",
         diet:"Tiny animals and scraps near its burrow.",
         behaviour:"Snaps one oversized claw shut to stun prey with a popping bubble.",
@@ -860,7 +879,7 @@ const SITES = [
         location:"Coney Island",
         fun:"The snap of its claw is one of the loudest sounds in the whole ocean.",
         media:{type:"",src:""} },
-      { name:"Pipefish", sci:"Syngnathidae",
+      { name:"Pipefish", sci:"Syngnathidae", trophic:{level:3,tier:"secondary"},
         habitat:"Weaving through seagrass blades.",
         diet:"Sucks up tiny shrimp and plankton through its tube-shaped snout.",
         behaviour:"Drifts slowly and holds still to blend in with the seagrass.",
@@ -868,7 +887,7 @@ const SITES = [
         location:"Coney Island seagrass",
         fun:"It's basically a seahorse pulled straight — and the dad carries the eggs too.",
         media:{type:"",src:""} },
-      { name:"Brittle Star", sci:"Ophiuroidea",
+      { name:"Brittle Star", sci:"Ophiuroidea", trophic:{level:2.2,tier:"detrital"},
         habitat:"Tucked under rocks and inside sponges.",
         diet:"Filters tiny food and scavenges scraps.",
         behaviour:"Whips its long thin arms to scuttle away fast when uncovered.",
@@ -1086,6 +1105,35 @@ function closePanel(){
   }
 }
 
+/* ---- Trophic (food-web) pyramid ---- */
+const TIERS = [
+  {key:'apex',      label:'Apex predator',      sub:'top of the food chain'},
+  {key:'tertiary',  label:'Tertiary consumer',  sub:'eats other carnivores'},
+  {key:'secondary', label:'Secondary consumer', sub:'eats primary consumers'},
+  {key:'primary',   label:'Primary consumer',   sub:'eats producers & plankton'},
+  {key:'producer',  label:'Producer',           sub:'makes food from sunlight'}
+];
+const TIER_W = {apex:48,tertiary:61,secondary:74,primary:87,producer:100};
+function renderTrophic(sp){
+  const t = sp.trophic || {level:3.0,tier:'secondary'};
+  const detrital = t.tier==='detrital';
+  const tierLabel = detrital ? 'recycler' : TIERS.find(x=>x.key===t.tier).label.toLowerCase();
+  const rows = TIERS.map(tier=>{
+    const active = (!detrital && tier.key===t.tier);
+    return `<div class="tro-row${active?' active':''}" style="width:${TIER_W[tier.key]}%"><b>${tier.label}</b><span>${tier.sub}</span></div>`;
+  }).join('');
+  return `
+    <div class="tro-head">Where it sits in the food web</div>
+    <p class="tro-intro">Every habitat has two food chains that link together — one built on <b>living plants</b> (the pyramid) and one on <b>dead matter</b> (the recyclers). This animal is a <b>${tierLabel}</b>, highlighted below · trophic level ≈ ${t.level.toFixed(1)}.</p>
+    <div class="tro-chainlabel">Grazing food chain — begins with living plants</div>
+    <div class="tro-pyr">${rows}</div>
+    <div class="tro-detrital${detrital?' active':''}">
+      <div class="tro-chainlabel" style="margin-top:0">Detrital food chain — begins with dead matter</div>
+      <div class="tro-recyc"><b>Recyclers</b><span>detritivores &amp; decomposers that break down dead plants and animals, returning nutrients to the producers</span></div>
+    </div>
+    <div class="tro-key">Producers make their own food · Consumers eat other living things · Recyclers break down the dead</div>`;
+}
+
 /* ---- Species card ---- */
 function openCard(idx){
   currentIndex = idx;
@@ -1128,6 +1176,7 @@ function openCard(idx){
        <div><div class="fl">${f[1]}</div><div class="fv">${f[2]}</div></div></div>`).join('');
 
   document.getElementById('cardFun').innerHTML = `<b>Did you know?</b> ${sp.fun}`;
+  document.getElementById('cardTrophic').innerHTML = renderTrophic(sp);
   document.getElementById('overlay').classList.add('open');
 }
 function closeCard(){ document.getElementById('overlay').classList.remove('open'); }
