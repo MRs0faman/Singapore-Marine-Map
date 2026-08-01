@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SG Marine Map — version 2.4.0 -->
+<!-- SG Marine Map — version 2.9.0 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -71,7 +71,10 @@
   .maplibregl-ctrl-attrib{font-size:.65rem;}
 
   /* ---------- Habitat pins ---------- */
-  .marker{will-change:transform;transition:opacity .2s;}
+  .marker{will-change:transform;transition:opacity .2s;z-index:2;}
+  /* A hovered pin always wins: it lifts above its neighbours and shows its nameplate
+     even when the declutter pass had to hide it. */
+  .marker:hover{z-index:60;}
   .gpin{position:relative;cursor:pointer;transition:transform .15s ease;transform-origin:50% 100%;
     filter:drop-shadow(0 3px 3px rgba(43,61,70,.35));}
   .gpin:hover{transform:scale(1.14);}
@@ -84,15 +87,21 @@
   .hab-badge svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
     transition:width .15s ease,height .15s ease;}
   /* Enlarge the habitat badges when the pin is hovered so they're easy to see. */
-  .gpin:hover .hab-badges{gap:5px;bottom:calc(100% + 7px);}
-  .gpin:hover .hab-badge{width:36px;height:36px;}
-  .gpin:hover .hab-badge svg{width:22px;height:22px;}
+  .gpin:hover .hab-badges{gap:6px;bottom:calc(100% + 9px);}
+  .gpin:hover .hab-badge{width:44px;height:44px;border-width:2.2px;}
+  .gpin:hover .hab-badge svg{width:27px;height:27px;}
+  /* Nameplate. Hidden at rest — fourteen plates on screen at once read as clutter — and
+     revealed only while its pin is hovered. Position is fixed here and nowhere else:
+     centred directly under the pin, the same for every site, following its marker on
+     pan and zoom for free. Nothing in JS touches these values. */
   .pin-label{
     position:absolute;left:50%;top:44px;transform:translateX(-50%);
     background:#fff;border:1px solid var(--line);border-radius:8px;
     padding:2px 8px;font-size:.72rem;color:var(--ink);white-space:nowrap;
     box-shadow:0 2px 6px rgba(43,61,70,.12);pointer-events:none;
+    opacity:0;transition:opacity .18s ease;
   }
+  .marker:hover .pin-label{opacity:1;}
 
   /* ---------- Site page (slide-in) ---------- */
   .panel{
@@ -159,7 +168,10 @@
   /* Video / media slot */
   .media{position:relative;background:var(--sea);aspect-ratio:16/9;width:100%;overflow:hidden;
     display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);}
-  .media video,.media iframe{width:100%;height:100%;border:0;display:block;object-fit:cover;}
+  .media video,.media iframe,.media img{width:100%;height:100%;border:0;display:block;object-fit:cover;}
+  .media-credit{position:absolute;left:0;right:0;bottom:0;padding:5px 10px;
+    background:linear-gradient(transparent,rgba(43,61,70,.62));
+    color:rgba(255,255,255,.94);font-size:.68rem;text-align:right;pointer-events:none;}
   .media-placeholder{
     text-align:center;color:var(--accent);padding:20px;
     display:flex;flex-direction:column;align-items:center;gap:8px;
@@ -220,7 +232,8 @@
   .tro-mini.detr .tro-bar{width:78%;background:#f0e7d8;}
   .tro-mini.detr .tro-bar.on{background:#e6c99a;box-shadow:0 2px 7px rgba(193,166,122,.4);}
   .tro-up{color:#c1a67a;font-size:.78rem;line-height:1;font-weight:700;}
-  .tro-name{font-size:.85rem;font-weight:600;color:var(--ink);text-align:center;margin-top:10px;line-height:1.3;}
+  .tro-name{font-size:.85rem;font-weight:600;color:var(--ink);text-align:center;margin-top:10px;line-height:1.3;
+    overflow-wrap:break-word;hyphens:auto;}
   .tro-desc{font-size:.73rem;color:var(--ink-soft);line-height:1.45;text-align:center;margin-top:4px;}
   .tro-more{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:10px;padding-top:9px;
     border-top:1px solid var(--line);font-size:.71rem;color:var(--accent);font-weight:600;}
@@ -230,6 +243,12 @@
   .tro-panel[open] .tro-more .lbl-shut{display:none;}
   .tro-more .lbl-open{display:none;}
   .tro-panel[open] .tro-more .lbl-open{display:inline;}
+  /* "Tap" on touch, "Click" on a mouse — the prompt should match the device. */
+  .verb-click{display:none;}
+  @media (hover:hover) and (pointer:fine){
+    .verb-tap{display:none;}
+    .verb-click{display:inline;}
+  }
 
   /* Expanded scientific view. */
   .tro-sci{padding:0 15px 15px;}
@@ -241,8 +260,11 @@
   .tro-dot{position:absolute;left:7px;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;
     background:var(--coral);border:2px solid #fff;box-shadow:0 1px 5px rgba(43,61,70,.3);}
   .tro-rows{position:relative;}
-  .tro-row{position:absolute;left:0;height:28px;border-radius:6px;display:flex;align-items:center;
-    padding:0 10px;background:#e9edf1;color:var(--ink-soft);font-size:.78rem;overflow:hidden;white-space:nowrap;}
+  /* min-width keeps the narrowest tier readable when the card is narrow; the wider
+     tiers still step down in width, so the pyramid shape survives. */
+  .tro-row{position:absolute;left:0;height:28px;line-height:28px;border-radius:6px;
+    padding:0 10px;background:#e9edf1;color:var(--ink-soft);font-size:.78rem;
+    overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:118px;}
   .tro-row.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;font-weight:600;}
   .tro-exp-body{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 13px;}
   .tro-lvhead{font-size:.84rem;font-weight:600;color:var(--ink);margin-bottom:7px;}
@@ -278,10 +300,41 @@
   .leg-pin svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
   .leg-all{margin-top:8px;justify-content:center;color:var(--ink-soft);font-size:.85rem;border:1px solid var(--line);padding:9px;}
   .leg-all:hover{border-color:var(--accent);}
-  .hchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
-  .hchip{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;background:var(--panel);
-    border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--ink-soft);}
-  .hchip .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  /* Habitat chips on the site page. These are buttons: tapping one filters the
+     species list below to that habitat, tapping it again clears the filter. */
+  .hchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .hchip{display:inline-flex;align-items:center;gap:9px;font-family:inherit;font-size:.85rem;
+    background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:4px 15px 4px 4px;color:var(--ink);cursor:pointer;
+    transition:border-color .14s,box-shadow .14s,transform .14s,background .14s;}
+  .hchip .ic{width:27px;height:27px;border-radius:50%;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;}
+  .hchip .ic svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2.3;
+    stroke-linecap:round;stroke-linejoin:round;}
+  .hchip:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow);}
+  .hchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .hchip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;
+    box-shadow:var(--shadow);}
+  .hchip.active .ic{box-shadow:0 0 0 2px rgba(255,255,255,.6);}
+  .sp-empty{grid-column:1/-1;padding:22px 4px;color:var(--ink-soft);font-size:.9rem;text-align:center;}
+
+  /* Depth profile. Replaces the species grid for habitats with real vertical range
+     (HABITATS[k].depth). A scale runs down the left; species sit at the depth they live
+     at. Several species at one depth share a band, and that band scrolls sideways. */
+  .depth-prof{position:relative;padding:6px 0 10px;}
+  .depth-prof::before{content:'';position:absolute;left:58px;top:12px;bottom:12px;width:2px;
+    background:linear-gradient(180deg,var(--sea),var(--sea-deep));border-radius:2px;}
+  .depth-band{position:relative;display:grid;grid-template-columns:58px 1fr;align-items:start;}
+  .depth-band::before{content:'';position:absolute;left:51.5px;top:24px;width:11px;height:11px;
+    border-radius:50%;background:var(--card);border:2.5px solid var(--sea-deep);z-index:1;}
+  .depth-lab{font-size:.72rem;font-weight:700;color:var(--ink-soft);white-space:nowrap;
+    text-align:right;padding:22px 15px 0 0;}
+  .depth-lane{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;
+    padding:0 2px 12px 20px;scroll-snap-type:x proximity;scrollbar-width:thin;}
+  .depth-lane .sp-card{flex:0 0 154px;scroll-snap-align:start;}
+  .depth-lane::-webkit-scrollbar{height:7px;}
+  .depth-lane::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;}
+  .depth-lane::-webkit-scrollbar-track{background:transparent;}
 
   .offline-note{display:none;position:absolute;inset:0;align-items:center;justify-content:center;
     text-align:center;color:var(--ink-soft);font-size:.9rem;padding:40px;z-index:1;}
@@ -292,6 +345,27 @@
     .titles h1{font-size:1.05rem;}
     .topbar .hint{display:none;}
     .legend{display:none;}
+    /* Narrower depth scale so the species lane keeps its width on a phone. */
+    .depth-prof::before{left:46px;}
+    .depth-band{grid-template-columns:46px 1fr;}
+    .depth-band::before{left:39.5px;}
+    .depth-lab{padding-right:11px;font-size:.68rem;}
+    .depth-lane{padding-left:16px;}
+    .depth-lane .sp-card{flex:0 0 142px;}
+  }
+
+  /* Narrow screens: the two food-chain panels stop sharing a row. At half width the
+     tier names ("Secondary consumer") were the tightest text in the layout and clipped
+     on a phone; full width removes the problem rather than shortening the wording. */
+  @media (max-width:640px){
+    .overlay{padding:12px;}
+    .card-body{padding:18px 16px 22px;}
+    .tro-pair{grid-template-columns:1fr;gap:9px;}
+    .tro-panel summary{padding:12px 12px 10px;}
+    .tro-sci{padding:0 12px 13px;}
+    .tro-name{font-size:.88rem;}
+    .tro-row{font-size:.74rem;min-width:104px;}
+    .tro-dstep{width:96%;}
   }
 </style>
 </head>
@@ -325,7 +399,7 @@
           </div>
         </div>
         <div class="site-body">
-          <div class="subhead">Who lives here</div>
+          <div class="subhead" id="speciesHead">Who lives here</div>
           <div class="sp-grid" id="speciesItems"></div>
         </div>
       </div>
@@ -365,14 +439,30 @@
    Each species has these fields:
        name, sci (scientific name), emoji,
        habitat, diet, behaviour, role, location, fun,
+       habs: ["reef","sandy"],          <- see below
        media: { type: "", src: "" }
    -----------------------------------------------------------------------------
-   ADDING A VIDEO LATER  (works two ways — pick whichever you like per species):
-     • Local file:   media: { type:"file",  src:"videos/clownfish.mp4" }
-                     (put the .mp4 next to this HTML in a folder called "videos")
+   HABITAT TAGS (`habs`)
+   `habitat` is the prose sentence a reader sees on the species card. `habs` is the
+   machine-readable version: one or more of the eight habitat keys, used by the
+   habitat chips on the site page to filter the species list. A species may sit in
+   several. Keep every key inside its site's own `habitats` list, or the species
+   becomes unreachable from any chip.
+   -----------------------------------------------------------------------------
+   ADDING MEDIA  (four options — pick whichever suits each species):
+     • Local video:  media: { type:"file",  src:"videos/clownfish.mp4" }
+                     (put the .mp4 next to this HTML in a folder called "videos";
+                      optional: poster:"images/clownfish.jpg" for the still frame)
      • Online embed: media: { type:"embed", src:"https://www.youtube.com/embed/XXXX" }
                      (use the "embed" link, or a Vimeo player link)
-     • No video yet: media: { type:"", src:"" }   ← shows a neat placeholder
+     • Still photo:  media: { type:"image", src:"images/clownfish.jpg" }
+     • Nothing yet:  media: { type:"", src:"" }   ← shows a neat placeholder
+
+   Any of them accepts an optional credit line, shown along the bottom of the frame:
+       media: { type:"image", src:"images/clownfish.jpg",
+                credit:"Photo: Ria Tan / wildsingapore.com, CC BY-NC-ND 4.0" }
+   Attribution matters for the ISM write-up — record the licence for every asset,
+   even where the terms do not strictly require an on-screen credit.
    ============================================================================= */
 
 const SITES = [
@@ -384,6 +474,8 @@ const SITES = [
     species:[
       { name:"Fluted Giant Clam", sci:"Tridacna squamosa", trophic:{level:2.1,tier:"primary"},
         habitat:"Coral reefs and sandy patches, about 4–6 m deep on the shallow dive trail.",
+        habs:["reef"],
+        depth:[4.0,6.0],
         diet:"Filters tiny plankton from the water, and gets extra food from algae living inside its body.",
         behaviour:"Stays fixed in one spot; snaps its frilly shell shut if a shadow passes over.",
         role:"Filters and cleans seawater, and its shell becomes a home for other little creatures.",
@@ -392,6 +484,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Neptune's Cup Sponge", sci:"Cliona patera", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Deeper rocky and silty seabed, around 10–16 m on the deep dive trail.",
+        habs:["reef"],
+        depth:[10.0,16.0],
         diet:"Pumps seawater through its body to strain out bacteria, plankton and fine dead matter.",
         behaviour:"Grows into a giant goblet shape; big enough for a small child to sit in long ago.",
         role:"Provides shelter for small fish and shrimp, and filters huge amounts of water.",
@@ -400,6 +494,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Estuarine Seahorse", sci:"Hippocampus kuda", trophic:{level:3.6,tier:"tertiary"},
         habitat:"Calm seagrass meadows where it can hide among the blades.",
+        habs:["seagrass"],
+        depth:[0.5,4],
         diet:"Sucks up tiny shrimp and plankton through its long snout.",
         behaviour:"Wraps its tail around seagrass to anchor itself against the current.",
         role:"A sign of a healthy seagrass meadow; helps control tiny drifting creatures.",
@@ -408,6 +504,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"False Clownfish", sci:"Amphiprion ocellaris", trophic:{level:3.1,tier:"secondary",detrital:true},
         habitat:"Lives tucked inside the stinging tentacles of a sea anemone.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Nibbles algae, plankton and leftover bits of food.",
         behaviour:"Never strays far from its anemone home; wiggles to keep water flowing over it.",
         role:"Protects and cleans its anemone, while the anemone keeps it safe from predators.",
@@ -416,6 +514,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Hawksbill Turtle", sci:"Eretmochelys imbricata", trophic:{level:3,tier:"secondary"},
         habitat:"Coral reefs by day; females come ashore on quiet beaches to lay eggs.",
+        habs:["reef","intertidal"],
+        depth:[3,12],
         diet:"Mostly sponges, plus jellyfish and sea anemones.",
         behaviour:"Uses its narrow beak to reach food in reef cracks; travels long distances.",
         role:"Keeps sponge growth in check so corals have room to grow.",
@@ -432,6 +532,8 @@ const SITES = [
     species:[
       { name:"Common Sea Star", sci:"Archaster typicus", trophic:{level:2.2,tier:"primary",detrital:true},
         habitat:"Sandy shores and seagrass in the shallow intertidal zone.",
+        habs:["seagrass","sandy","intertidal"],
+        depth:[0.5,2.4],
         diet:"Slides over the sand digesting tiny bits of food and algae beneath it.",
         behaviour:"Buries into damp sand to stay cool and hidden when the tide goes out.",
         role:"A gentle recycler that cleans the sandy seabed.",
@@ -440,6 +542,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Haddon's Carpet Anemone", sci:"Stichodactyla haddoni", trophic:{level:2.8,tier:"secondary"},
         habitat:"Sandy lagoons and seagrass, spread out like a colourful carpet.",
+        habs:["seagrass","sandy"],
+        depth:[0.5,4],
         diet:"Stings and catches small animals that drift onto its sticky tentacles.",
         behaviour:"Can pull its whole body under the sand in a flash if disturbed.",
         role:"Provides a safe home for anemone shrimps and porcelain crabs.",
@@ -448,6 +552,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Mangrove Horseshoe Crab", sci:"Carcinoscorpius rotundicauda", trophic:{level:3,tier:"secondary",detrital:true},
         habitat:"Muddy mangrove shores and estuaries.",
+        habs:["mangrove","intertidal"],
+        depth:[0.7,1.5],
         diet:"Worms, small shellfish and insect larvae dug from the mud, plus dead animals it comes across.",
         behaviour:"Ploughs slowly through mud; the young often ride on the mother's back.",
         role:"Turns over mud so the seabed stays healthy.",
@@ -456,6 +562,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Cake Sand Dollar", sci:"Arachnoides placenta", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Just under the surface of sandy shores.",
+        habs:["sandy","intertidal"],
+        depth:[1.4,3],
         diet:"Sorts tiny living algae and specks of dead matter out of the sand.",
         behaviour:"Burrows below the sand, leaving a faint round outline on the surface.",
         role:"A relative of sea stars that keeps sandy flats clean.",
@@ -464,6 +572,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Giant Mudskipper", sci:"Periophthalmodon schlosseri", trophic:{level:3.3,tier:"secondary"},
         habitat:"Mangrove mudflats between land and sea.",
+        habs:["mangrove"],
+        depth:[-0.3,0.3],
         diet:"Small crabs, insects and worms.",
         behaviour:"Walks on its fins and can breathe air, staying out of water for a while.",
         role:"A top little hunter of the mudflats; digs burrows that air the mud.",
@@ -480,6 +590,8 @@ const SITES = [
     species:[
       { name:"Blue-spotted Fantail Ray", sci:"Taeniura lymma", trophic:{level:3.8,tier:"tertiary"},
         habitat:"Sandy patches near coral reefs.",
+        habs:["reef"],
+        depth:[7.0,12],
         diet:"Crabs, shrimp and small shellfish it digs from the sand.",
         behaviour:"Rests under ledges by day and glides out to feed.",
         role:"Keeps the numbers of small seabed animals in balance.",
@@ -488,6 +600,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Funeral Nudibranch", sci:"Jorunna funebris", trophic:{level:3,tier:"secondary"},
         habitat:"Reefs and rocky surfaces where its favourite sponges grow.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Eats blue sponges — and even borrows their toxins for defence.",
         behaviour:"Crawls slowly, waving feathery gills on its back.",
         role:"Helps control sponge growth on the reef.",
@@ -496,6 +610,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Broadclub Cuttlefish", sci:"Sepia latimanus", trophic:{level:3.6,tier:"tertiary"},
         habitat:"Reefs and seagrass edges.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Fish and shrimp, caught with two fast-shooting tentacles.",
         behaviour:"Flashes shifting colours and patterns across its skin to hunt and communicate.",
         role:"A clever mid-level predator of the reef.",
@@ -504,6 +620,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Copperband Butterflyfish", sci:"Chelmon rostratus", trophic:{level:3.5,tier:"tertiary"},
         habitat:"Coral reefs with plenty of nooks and crannies.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Uses its long snout to pick tiny animals from reef cracks.",
         behaviour:"Swims in pairs, gently poking around the coral.",
         role:"Keeps reef crevices tidy by eating small pests.",
@@ -520,6 +638,8 @@ const SITES = [
     species:[
       { name:"Knobbly Sea Star", sci:"Protoreaster nodosus", trophic:{level:2.6,tier:"secondary",detrital:true},
         habitat:"Seagrass meadows and sandy reef flats.",
+        habs:["reef","seagrass"],
+        depth:[7.0,12],
         diet:"Feeds on tiny animals and bits of food on the seabed.",
         behaviour:"Moves very slowly on hundreds of tiny tube feet.",
         role:"A grazer that helps keep the seagrass meadow healthy.",
@@ -528,6 +648,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Dugong", sci:"Dugong dugon", trophic:{level:2,tier:"primary"},
         habitat:"Shallow seagrass meadows.",
+        habs:["reef","seagrass"],
+        depth:[3,8.0],
         diet:"A plant-eater that grazes on seagrass, roots and all.",
         behaviour:"Shy and rarely seen, but leaves winding feeding trails in the meadow.",
         role:"A gardener of the sea that keeps seagrass meadows growing.",
@@ -536,6 +658,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Garlic Bread Sea Cucumber", sci:"Holothuria scabra", trophic:{level:2,tier:"primary",detrital:true},
         habitat:"Sandy and seagrass seabed.",
+        habs:["reef","seagrass"],
+        depth:[7.0,12],
         diet:"Swallows sand to digest the tiny scraps of food inside it.",
         behaviour:"Lies quietly on the seabed, slowly sifting through sand.",
         role:"A living vacuum cleaner that recycles the seabed.",
@@ -544,6 +668,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Tape Seagrass", sci:"Enhalus acoroides", trophic:{level:1,tier:"producer"},
         habitat:"Shallow, sheltered, soft-bottomed seabed.",
+        habs:["reef","seagrass","intertidal"],
+        depth:[3,8.0],
         diet:"Makes its own food from sunlight, like plants on land.",
         behaviour:"Its long ribbon leaves sway with the tide.",
         role:"A nursery and food source — feeds dugongs and shelters baby fish.",
@@ -560,6 +686,8 @@ const SITES = [
     species:[
       { name:"Noble Volute", sci:"Cymbiola nobilis", trophic:{level:3.3,tier:"secondary"},
         habitat:"Sandy and seagrass shores.",
+        habs:["seagrass","intertidal"],
+        depth:[0.5,2.4],
         diet:"A hunter that wraps its foot around clams and other shellfish.",
         behaviour:"Glides across the sand leaving a shallow trail behind it.",
         role:"Keeps shellfish numbers in balance on the shore.",
@@ -568,6 +696,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Fan Worm", sci:"Sabellastarte spectabilis", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Attached to rocks and reef among sand.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Filters plankton and fine dead matter from the water with its feathery crown.",
         behaviour:"Snaps its feathery fan back into a tube the instant a shadow appears.",
         role:"Cleans the water by filtering tiny particles.",
@@ -576,6 +706,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Sunflower Mushroom Coral", sci:"Heliofungia actiniformis", trophic:{level:2.3,tier:"primary"},
         habitat:"Sandy patches near reefs.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Feeds on plankton and gets energy from algae inside it.",
         behaviour:"Unusual for a coral — it can slowly move itself across the sand.",
         role:"Adds to the reef and shelters small shrimp and fish.",
@@ -584,6 +716,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Estuarine Stonefish", sci:"Synanceia horrida", trophic:{level:4.4,tier:"tertiary"},
         habitat:"Sits still on sandy and rubbly seabed.",
+        habs:["intertidal"],
+        depth:[0,0.8],
         diet:"Ambushes small fish and shrimp that swim too close.",
         behaviour:"Stays perfectly still, camouflaged as a lumpy rock.",
         role:"A patient ambush predator of the shallows.",
@@ -600,6 +734,8 @@ const SITES = [
     species:[
       { name:"Staghorn Coral", sci:"Acropora sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Sunny, clear-water reefs.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Gets most of its energy from algae inside it, and catches plankton at night.",
         behaviour:"Grows in fast branching shapes like deer antlers.",
         role:"Builds the reef itself — a home and hiding place for countless animals.",
@@ -608,6 +744,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Blacktip Reef Shark", sci:"Carcharhinus melanopterus", trophic:{level:3.9,tier:"apex"},
         habitat:"Shallow reef edges and lagoons.",
+        habs:["reef"],
+        depth:[3,8.0],
         diet:"Small reef fish and squid.",
         behaviour:"Cruises the reef edge, usually shy of people.",
         role:"A top predator that keeps the reef's fish community healthy.",
@@ -616,6 +754,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Green Sea Turtle", sci:"Chelonia mydas", trophic:{level:2,tier:"primary"},
         habitat:"Seagrass meadows and coral reefs.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"The only mostly plant-eating sea turtle — grazes on seagrass and algae.",
         behaviour:"Comes up for air, then rests on the reef between grazing.",
         role:"Keeps seagrass meadows trimmed and healthy.",
@@ -624,6 +764,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Titan Triggerfish", sci:"Balistoides viridescens", trophic:{level:3.3,tier:"secondary"},
         habitat:"Coral reefs with sandy patches.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Crunches sea urchins, shellfish and coral with strong teeth.",
         behaviour:"Fiercely guards its nest — even chasing away divers who get too close.",
         role:"By flipping rocks and coral it creates food chances for smaller fish.",
@@ -640,6 +782,8 @@ const SITES = [
     species:[
       { name:"Cake Sea Star", sci:"Anthenea aspera", trophic:{level:2.4,tier:"primary",detrital:true},
         habitat:"Sandy and seagrass flats in the shallow intertidal zone.",
+        habs:["seagrass","sandy","intertidal"],
+        depth:[0.5,2.4],
         diet:"Scavenges tiny scraps of food and algae on the sand.",
         behaviour:"Rests half-buried and comes out as the tide falls.",
         role:"A gentle recycler that helps keep the sandy shore clean.",
@@ -648,6 +792,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Thorny Sea Cucumber", sci:"Colochirus quadrangularis", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Tucked among seagrass on the intertidal flat.",
+        habs:["seagrass","sandy","intertidal"],
+        depth:[0.5,4],
         diet:"Catches plankton and drifting dead matter on its feathery tentacles.",
         behaviour:"Wedges itself in the seagrass, waving its tentacles to feed.",
         role:"Filters and cleans the water around the shore.",
@@ -656,6 +802,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Sea Pen", sci:"Pteroeides sp.", trophic:{level:2.2,tier:"primary",detrital:true},
         habitat:"Anchored upright in the soft sandy seabed.",
+        habs:["sandy"],
+        depth:[1.4,3],
         diet:"Filters plankton and fine dead matter drifting past in the current.",
         behaviour:"Roots into the sand; some can glow when touched at night.",
         role:"A soft-coral relative that shelters tiny shrimp and crabs.",
@@ -664,6 +812,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Moon Snail", sci:"Natica sp.", trophic:{level:3.3,tier:"secondary"},
         habitat:"Sandy shores just under the surface.",
+        habs:["sandy","intertidal"],
+        depth:[0,3],
         diet:"Hunts clams, drilling a neat round hole in their shells.",
         behaviour:"Ploughs along under the sand, leaving a raised trail.",
         role:"A predator that keeps shellfish numbers in balance.",
@@ -680,6 +830,8 @@ const SITES = [
     species:[
       { name:"Estuarine Seahorse", sci:"Hippocampus kuda", trophic:{level:3.6,tier:"tertiary"},
         habitat:"Clinging to seagrass and seaweed in calm shallows.",
+        habs:["seagrass"],
+        depth:[0.5,2.4],
         diet:"Sucks up tiny shrimp and plankton through its long snout.",
         behaviour:"Anchors with its curly tail so the current can't sweep it away.",
         role:"A sign of a healthy shore, and a hunter of tiny drifting animals.",
@@ -688,6 +840,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Eight-armed Sea Star", sci:"Luidia maculata", trophic:{level:3.3,tier:"secondary"},
         habitat:"Sandy and seagrass shores.",
+        habs:["seagrass","sandy"],
+        depth:[2.1,4],
         diet:"Hunts small animals on the seabed, swallowing them whole.",
         behaviour:"A fast-moving, fragile star that burrows into the sand.",
         role:"An active predator that helps balance shore life.",
@@ -696,6 +850,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Ball Sea Cucumber", sci:"Phyllophorus sp.", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Buried in sand and seagrass with only its tentacles showing.",
+        habs:["seagrass","sandy"],
+        depth:[2.1,4],
         diet:"Traps plankton and specks of dead matter with a crown of sticky tentacles.",
         behaviour:"Pulls itself in and rolls into a firm little ball when disturbed.",
         role:"Filters the water and recycles the sandy seabed.",
@@ -704,6 +860,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Smooth-coated Otter", sci:"Lutrogale perspicillata", trophic:{level:4,tier:"apex"},
         habitat:"Mangroves, rivers and coasts.",
+        habs:["mangrove"],
+        depth:[-0.5,2],
         diet:"Mainly fish, plus the occasional crab.",
         behaviour:"Lives in close, playful family groups that hunt together.",
         role:"A top predator whose presence shows the water is healthy.",
@@ -720,6 +878,8 @@ const SITES = [
     species:[
       { name:"Cauliflower Coral", sci:"Pocillopora sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Sunlit rocky reef flats.",
+        habs:["reef","rocky"],
+        depth:[3,12],
         diet:"Energy from algae inside it, plus plankton caught at night.",
         behaviour:"Grows in rounded, bumpy branching clumps.",
         role:"Builds reef and shelters small fish and shrimp.",
@@ -728,6 +888,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Reef Octopus", sci:"Octopus sp.", trophic:{level:3.6,tier:"tertiary"},
         habitat:"Reef crevices and rock pools.",
+        habs:["reef","rocky"],
+        depth:[3,12],
         diet:"Crabs, shellfish and small fish.",
         behaviour:"Hunts at night; by day it hides and changes colour to blend in.",
         role:"A clever predator that keeps crab and shellfish numbers down.",
@@ -736,6 +898,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Pimply Phyllid Nudibranch", sci:"Phyllidiella pustulosa", trophic:{level:3,tier:"secondary"},
         habitat:"Rocky reef surfaces where sponges grow.",
+        habs:["reef","rocky"],
+        depth:[3,12],
         diet:"Eats sponges, borrowing their chemicals for defence.",
         behaviour:"Crawls slowly, protected by a nasty taste.",
         role:"Helps control sponge growth on the reef.",
@@ -744,6 +908,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Black Long-spined Sea Urchin", sci:"Diadema setosum", trophic:{level:2,tier:"primary"},
         habitat:"Rocky reef and seagrass, wedged in crevices.",
+        habs:["reef","rocky"],
+        depth:[3,12],
         diet:"Grazes algae off the rocks, mostly at night.",
         behaviour:"Waves its long black spines to fend off anything that comes close.",
         role:"Grazes algae so it doesn't smother the corals.",
@@ -760,6 +926,8 @@ const SITES = [
     species:[
       { name:"Brain Coral", sci:"Platygyra sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Settled naturally on the granite seawall.",
+        habs:["reef","seawall"],
+        depth:[3,12],
         diet:"Algae living inside it, plus plankton.",
         behaviour:"Grows as a sturdy boulder covered in maze-like ridges.",
         role:"Living proof that corals can colonise man-made shores.",
@@ -768,6 +936,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Button Zoanthids", sci:"Zoanthus sp.", trophic:{level:2.3,tier:"primary"},
         habitat:"Encrusting the seawall rocks in the shallows.",
+        habs:["reef","seawall"],
+        depth:[3,8.0],
         diet:"Plankton, plus algae living inside them.",
         behaviour:"Dozens of tiny polyps open together like a bed of flowers.",
         role:"Carpet the seawall, adding to its surprising reef life.",
@@ -776,6 +946,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Sergeant Major", sci:"Abudefduf sp.", trophic:{level:2.7,tier:"secondary"},
         habitat:"Shallow reef and seawalls.",
+        habs:["reef","seawall"],
+        depth:[3,8.0],
         diet:"Algae, plankton and tiny animals.",
         behaviour:"Swims in busy shoals; males guard patches of purple eggs.",
         role:"A lively grazer and a meal for bigger reef predators.",
@@ -784,6 +956,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Feather Star", sci:"Crinoidea", trophic:{level:2.2,tier:"primary",detrital:true},
         habitat:"Perched on coral and seawall rock.",
+        habs:["reef","seawall"],
+        depth:[3,12],
         diet:"Combs plankton and drifting dead matter out of the water with its many arms.",
         behaviour:"Spreads its arms to feed and can even swim by waving them.",
         role:"A filter feeder that adds to the seawall's reef diversity.",
@@ -800,6 +974,8 @@ const SITES = [
     species:[
       { name:"Fluted Giant Clam", sci:"Tridacna squamosa", trophic:{level:2.1,tier:"primary"},
         habitat:"Coral reef and sandy patches around the islands.",
+        habs:["reef"],
+        depth:[3,12],
         diet:"Filters plankton, plus food from algae living inside it.",
         behaviour:"Stays fixed in place; closes its frilly shell if a shadow passes.",
         role:"Filters seawater — and here, a symbol of marine restoration.",
@@ -808,6 +984,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Fiddler Crab", sci:"Uca sp.", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Muddy edges of the lagoon and nearby mangroves.",
+        habs:["reef"],
+        depth:[7.0,12],
         diet:"Scoops tiny bits of food from the mud.",
         behaviour:"Males wave one huge colourful claw to attract a mate.",
         role:"Their busy burrowing keeps the mud healthy and aired.",
@@ -816,6 +994,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Hermit Crab", sci:"Clibanarius sp.", trophic:{level:2.2,tier:"primary",detrital:true},
         habitat:"Sandy and rocky shores.",
+        habs:["rocky","intertidal"],
+        depth:[0,3],
         diet:"Scavenges scraps of food and algae.",
         behaviour:"Carries an empty snail shell as a home, swapping up as it grows.",
         role:"A recycler that helps keep the shore clean.",
@@ -824,6 +1004,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Blue Coral", sci:"Heliopora coerulea", trophic:{level:2.3,tier:"primary"},
         habitat:"Shallow reef flats.",
+        habs:["reef"],
+        depth:[3,8.0],
         diet:"Algae inside it, plus plankton.",
         behaviour:"Slow-growing, forming sturdy long-lived colonies.",
         role:"An important reef-builder and one of the oldest coral types.",
@@ -840,6 +1022,8 @@ const SITES = [
     species:[
       { name:"Gold-spotted Mudskipper", sci:"Periophthalmus chrysospilos", trophic:{level:3,tier:"secondary"},
         habitat:"Mangrove mudflats between land and sea.",
+        habs:["mangrove","mudflat"],
+        depth:[-0.3,0.3],
         diet:"Tiny animals and algae on the surface of the mud.",
         behaviour:"Perches on roots and mud, darting to snap up food; it can breathe air.",
         role:"Shows how life bridges water and land in the mangrove.",
@@ -848,6 +1032,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Tree-climbing Crab", sci:"Episesarma sp.", trophic:{level:2,tier:"detrital"},
         habitat:"Mangrove trees and the mud around their roots.",
+        habs:["mangrove","mudflat"],
+        depth:[-2.5,-0.3],
         diet:"Mostly fallen mangrove leaves.",
         behaviour:"Climbs up tree trunks at high tide to stay out of the water.",
         role:"Recycles leaves into food for the whole mangrove.",
@@ -856,6 +1042,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Mud Lobster", sci:"Thalassina anomala", trophic:{level:2.1,tier:"detrital"},
         habitat:"Deep burrows in the mangrove mud.",
+        habs:["mangrove","mudflat"],
+        depth:[0.8,2.0],
         diet:"Sifts food from the mud it digs through.",
         behaviour:"Builds tall volcano-shaped mounds; it is almost never seen itself.",
         role:"Its digging recycles nutrients and makes homes for other animals.",
@@ -864,6 +1052,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Archerfish", sci:"Toxotes jaculatrix", trophic:{level:2.6,tier:"secondary"},
         habitat:"Mangrove creeks and estuaries.",
+        habs:["mangrove"],
+        depth:[0,1.5],
         diet:"Insects it knocks off leaves hanging above the water.",
         behaviour:"Spits a jet of water to shoot down prey above the surface.",
         role:"A sharpshooting hunter linking the mangrove trees to the water.",
@@ -880,6 +1070,8 @@ const SITES = [
     species:[
       { name:"Hairy Crab", sci:"Pilumnus vespertilio", trophic:{level:2.3,tier:"primary",detrital:true},
         habitat:"Under rocks on the rocky shore.",
+        habs:["rocky"],
+        depth:[0,3],
         diet:"Scavenges small bits of food and algae.",
         behaviour:"Hides in crevices; its hairy shell traps silt as camouflage.",
         role:"A scavenger that helps clean the rocky shore.",
@@ -888,6 +1080,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Encrusting Sponge", sci:"Porifera", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Rocks and shaded ledges near the low-tide mark.",
+        habs:["rocky"],
+        depth:[0,3],
         diet:"Pumps water through its pores to strain out bacteria, plankton and fine dead matter.",
         behaviour:"Sits still, quietly filtering seawater all day.",
         role:"Cleans the water and shelters tiny creatures.",
@@ -896,6 +1090,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Spoon Seagrass", sci:"Halophila ovalis", trophic:{level:1,tier:"producer"},
         habitat:"Sandy patches along the shore.",
+        habs:["seagrass"],
+        depth:[0.5,4],
         diet:"Makes its own food from sunlight, like plants on land.",
         behaviour:"Spreads tiny paired oval leaves low across the sand.",
         role:"Food and shelter for small shore animals.",
@@ -904,6 +1100,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Nerite Snail", sci:"Nerita sp.", trophic:{level:2,tier:"primary"},
         habitat:"Rocks in the splash zone near the water's edge.",
+        habs:["rocky"],
+        depth:[0,3],
         diet:"Grazes the film of algae off the rocks.",
         behaviour:"Clamps tightly to the rock to keep from drying out at low tide.",
         role:"Keeps the rocks clear of algae.",
@@ -920,6 +1118,8 @@ const SITES = [
     species:[
       { name:"Flower Crab", sci:"Portunus pelagicus", trophic:{level:3.3,tier:"secondary",detrital:true},
         habitat:"Sandy shallows and seagrass.",
+        habs:["seagrass","sandy","intertidal"],
+        depth:[0.5,2.4],
         diet:"Hunts small fish, shrimp and shellfish, and scavenges whatever has already died.",
         behaviour:"Swims sideways and buries in the sand with just its eyes poking out.",
         role:"An active predator — and in turn, food for bigger animals.",
@@ -928,6 +1128,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Snapping Shrimp", sci:"Alpheus sp.", trophic:{level:2.6,tier:"secondary",detrital:true},
         habitat:"Burrows in sand and among rubble.",
+        habs:["sandy","rocky"],
+        depth:[1.4,3],
         diet:"Tiny animals and scraps near its burrow.",
         behaviour:"Snaps one oversized claw shut to stun prey with a popping bubble.",
         role:"Its burrows shelter little partner gobies that stand guard at the door.",
@@ -936,6 +1138,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Pipefish", sci:"Syngnathidae", trophic:{level:3.5,tier:"tertiary"},
         habitat:"Weaving through seagrass blades.",
+        habs:["seagrass"],
+        depth:[0.5,4],
         diet:"Sucks up tiny shrimp and plankton through its tube-shaped snout.",
         behaviour:"Drifts slowly and holds still to blend in with the seagrass.",
         role:"A sign of a healthy seagrass meadow.",
@@ -944,6 +1148,8 @@ const SITES = [
         media:{type:"",src:""} },
       { name:"Brittle Star", sci:"Ophiuroidea", trophic:{level:2.6,tier:"secondary",detrital:true},
         habitat:"Tucked under rocks and inside sponges.",
+        habs:["rocky","intertidal"],
+        depth:[0,3],
         diet:"Filters tiny food and scavenges scraps.",
         behaviour:"Whips its long thin arms to scuttle away fast when uncovered.",
         role:"A recycler that helps keep the shore clean.",
@@ -956,16 +1162,17 @@ const SITES = [
 
 /* ============================ APP LOGIC ============================ */
 let map, currentSite=null, currentIndex=0, markers=[], activeHabitat=null, selectedIndex=null;
+let siteHab=null;   // habitat chip selected inside the site page; filters that site's species list only
 
 // Habitat types: colour + a small white icon for each.
 const HABITATS = {
-  reef:    { label:'Coral reef',         color:'#e39170', icon:'<path d="M12 21Q11 14 11 7"/><path d="M11.4 16.5Q15 13 18 8.5"/><path d="M11.3 13.5Q8 11.5 5 8"/><path d="M11.1 10.5Q13.5 7.5 15.5 4"/><path d="M11.6 18.5Q9 17 6.5 13.5"/>' },
-  seagrass:{ label:'Seagrass meadow',    color:'#6aa64f', icon:'<path d="M4 20.2h16"/><path d="M7.5 20C7 15.5 9.5 13.5 8.5 8"/><path d="M12 20C11.5 14 14 11.5 12.5 5"/><path d="M16 20C15.5 16.5 17.5 14.5 16.5 10.5"/>' },
+  reef:    { label:'Coral reef',         depth:true, color:'#e39170', icon:'<path d="M12 21Q11 14 11 7"/><path d="M11.4 16.5Q15 13 18 8.5"/><path d="M11.3 13.5Q8 11.5 5 8"/><path d="M11.1 10.5Q13.5 7.5 15.5 4"/><path d="M11.6 18.5Q9 17 6.5 13.5"/>' },
+  seagrass:{ label:'Seagrass meadow',    depth:true, color:'#6aa64f', icon:'<path d="M4 20.2h16"/><path d="M7.5 20C7 15.5 9.5 13.5 8.5 8"/><path d="M12 20C11.5 14 14 11.5 12.5 5"/><path d="M16 20C15.5 16.5 17.5 14.5 16.5 10.5"/>' },
   mangrove:{ label:'Mangrove',           color:'#3f7d63', icon:'<path d="M6.8 9.5a2.6 2.6 0 0 1 2.4-3.4 3 3 0 0 1 5.6 0 2.6 2.6 0 0 1 2.4 3.4z"/><path d="M12 9.5V13"/><path d="M12 13.5C9.5 13.5 8 15.5 7.5 19.5"/><path d="M12 13C14.5 13.5 17.5 14.5 17 19.5"/><path d="M12 13.5C12.3 16 13 17.5 13.2 19.5"/><path d="M5 19.8h14"/>' },
   mudflat: { label:'Mudflat',            color:'#9a7d50', icon:'<path d="M6.8 15C6.8 12.5 17.2 12.5 17.2 15 17.2 16.8 14.8 17.5 12 17.5 9.2 17.5 6.8 16.8 6.8 15Z"/><path d="M10.2 12.8V11.2M13.8 12.8V11.2"/><circle cx="10.2" cy="10.6" r=".9"/><circle cx="13.8" cy="10.6" r=".9"/><path d="M7.2 14.4C5 13.6 3.9 11.7 4.5 9.9"/><path d="M4.5 9.9 6 10.1M4.5 9.9 4.1 11.4"/><path d="M16.8 14.4C19 13.6 20.1 11.7 19.5 9.9"/><path d="M19.5 9.9 18 10.1M19.5 9.9 19.9 11.4"/><path d="M8 16.4 5.4 17.8M9 17.6 6.8 19.4M16 16.4 18.6 17.8M15 17.6 17.2 19.4"/><path d="M3 20.8h18"/>' },
   sandy:   { label:'Sandy shore',        color:'#d9bd6f', icon:'<circle cx="13.7" cy="9.3" r="0.48" fill="#fff"/><circle cx="12.5" cy="18.4" r="0.54" fill="#fff"/><circle cx="6.8" cy="7.6" r="0.56" fill="#fff"/><circle cx="4.1" cy="10.6" r="0.39" fill="#fff"/><circle cx="4.3" cy="15.3" r="0.55" fill="#fff"/><circle cx="17.6" cy="16.4" r="0.39" fill="#fff"/><circle cx="14.1" cy="12.4" r="0.42" fill="#fff"/><circle cx="17.4" cy="6.8" r="0.38" fill="#fff"/><circle cx="9.9" cy="9.3" r="0.52" fill="#fff"/><circle cx="8.6" cy="18.5" r="0.48" fill="#fff"/><circle cx="6.6" cy="11.9" r="0.48" fill="#fff"/><circle cx="10.1" cy="14.6" r="0.5" fill="#fff"/><circle cx="14.1" cy="4.5" r="0.43" fill="#fff"/><circle cx="10.6" cy="6.2" r="0.56" fill="#fff"/><circle cx="17.2" cy="12.6" r="0.55" fill="#fff"/><circle cx="19.5" cy="10.7" r="0.49" fill="#fff"/>' },
   rocky:   { label:'Rocky shore',        color:'#8593a0', icon:'<path d="M2.5 19.5h19"/><path d="M8.5 19.5C8.5 11.5 19.5 11.5 19.5 19.5Z"/><path d="M2.5 19.5C2.5 14 11 14 11 19.5Z"/><path d="M10.5 19.5C10.5 15.5 17.5 15.5 17.5 19.5Z"/>' },
-  seawall: { label:'Artificial seawall', color:'#6f8fb0', icon:'<path d="M8 19L16 9H20.5"/><path d="M20.5 9V19"/><path d="M10.8 16.6 11.8 15.4M12.9 14 13.9 12.8M15 11.5 16 10.3"/><path d="M2 19.5h19"/><path d="M2 14.6c1.3-1 2.6 1 3.9 0s2.6-1 3.9 0"/><path d="M2 17c1.3-1 2.6 1 3.9 0s2.6-1 3.9 0"/>' },
+  seawall: { label:'Artificial seawall', depth:true, color:'#6f8fb0', icon:'<path d="M8 19L16 9H20.5"/><path d="M20.5 9V19"/><path d="M10.8 16.6 11.8 15.4M12.9 14 13.9 12.8M15 11.5 16 10.3"/><path d="M2 19.5h19"/><path d="M2 14.6c1.3-1 2.6 1 3.9 0s2.6-1 3.9 0"/><path d="M2 17c1.3-1 2.6 1 3.9 0s2.6-1 3.9 0"/>' },
   intertidal:{ label:'Intertidal zone', color:'#3fb0c0', icon:'<path d="M3 9.5c2-1.3 4 1.3 6 0s4-1.3 6 0 4 1.3 6 0"/><path d="M3 12.7c2-1.3 4 1.3 6 0s4-1.3 6 0 4 1.3 6 0"/><path d="M3 16.2h18"/>' }
 };
 
@@ -985,15 +1192,73 @@ function habBadge(k){
 const PHOTO_ICON = '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.6"/><path d="M8.5 7 10 4.5h4L15.5 7"/></svg>';
 const FISH_ICON = '<svg viewBox="0 0 24 24"><path d="M4 12c2.5-4 7-5.6 11-4.6 1.1.3 2.1.8 3 1.4l3.4-2.3-.9 3.9.9 3.9-3.4-2.3c-.9.6-1.9 1.1-3 1.4-4 1-8.5-.6-11-4.6z"/><circle cx="7.6" cy="11.3" r=".8"/></svg>';
 
-// Cartoon vector style: paint ALL land solid green, and only the water blue.
-// Uses OpenFreeMap vector tiles (full OSM detail — every island — with no roads or labels).
+// Cartoon vector style: land is the green background, water is painted blue on top,
+// and a few OpenMapTiles landcover classes add texture so the island is not one flat
+// slab of green. Uses OpenFreeMap vector tiles (full OSM detail — every island — with
+// no roads or labels).
+//
+// Ground texture, bottom to top:
+//   background  base green (everything that is not classified below)
+//   park        nature reserves and protected areas, a touch deeper than the base
+//   wood        forest and secondary growth
+//   grass       open grass and scrub, a touch lighter
+//   wetland     marsh and mangrove — the muted olive that reads as mangrove
+//   sand        real OSM beaches (Changi, East Coast, Tanah Merah, Sentosa, Coney)
+//   water       the sea and inland water
+//   shore       a soft sandy line straddling every coastline, so each island gets a
+//               beach edge even where OSM has no beach polygon mapped
+//   waterway    rivers and tidal channels (Sungei Buloh, Pasir Ris, Kranji)
+const MAP_C = {
+  land:'#bfe3a0', park:'#b4dd95', wood:'#a5d187', grass:'#cfeab0',
+  wetland:'#a9c9a4', sand:'#efdcaa', water:'#8ecdec', shore:'#f2e2b6'
+};
+// Every layer that comes from the vector source — hidden together by the fallback.
+const VECTOR_LAYERS = ['park','lc-wood','lc-grass','lc-wetland','lc-sand','water','shore','waterway'];
+
 const CARTOON_STYLE = {
   version:8,
   sources:{ openmaptiles:{ type:'vector', url:'https://tiles.openfreemap.org/planet' } },
   layers:[
-    { id:'land',  type:'background', paint:{'background-color':'#bfe3a0'} },
+    { id:'land', type:'background', paint:{'background-color':MAP_C.land} },
+
+    { id:'park', type:'fill', source:'openmaptiles', 'source-layer':'park',
+      paint:{'fill-color':MAP_C.park,'fill-opacity':0.55} },
+
+    { id:'lc-wood', type:'fill', source:'openmaptiles', 'source-layer':'landcover',
+      filter:['in',['get','class'],['literal',['wood','forest']]],
+      paint:{'fill-color':MAP_C.wood} },
+
+    { id:'lc-grass', type:'fill', source:'openmaptiles', 'source-layer':'landcover',
+      filter:['in',['get','class'],['literal',['grass','grassland','meadow','farmland']]],
+      paint:{'fill-color':MAP_C.grass} },
+
+    { id:'lc-wetland', type:'fill', source:'openmaptiles', 'source-layer':'landcover',
+      filter:['==',['get','class'],'wetland'],
+      paint:{'fill-color':MAP_C.wetland} },
+
+    { id:'lc-sand', type:'fill', source:'openmaptiles', 'source-layer':'landcover',
+      filter:['in',['get','class'],['literal',['sand','beach']]],
+      paint:{'fill-color':MAP_C.sand} },
+
     { id:'water', type:'fill', source:'openmaptiles', 'source-layer':'water',
-      paint:{'fill-color':'#8ecdec'} }
+      paint:{'fill-color':MAP_C.water} },
+
+    // Sandy shoreline. It is centred on the water boundary, so it reads as beach on the
+    // land side and shallow sandy bottom on the sea side — which is roughly true, and
+    // stops the coast looking like a hard cut-out.
+    { id:'shore', type:'line', source:'openmaptiles', 'source-layer':'water',
+      paint:{
+        'line-color':MAP_C.shore,
+        'line-opacity':0.95,
+        'line-width':['interpolate',['linear'],['zoom'],10,1.6, 12,3.2, 14,6.5, 16,13],
+        'line-blur':['interpolate',['linear'],['zoom'],10,0.5, 14,2, 16,4]
+      } },
+
+    { id:'waterway', type:'line', source:'openmaptiles', 'source-layer':'waterway',
+      paint:{
+        'line-color':MAP_C.water,
+        'line-width':['interpolate',['linear'],['zoom'],10,0.6, 13,1.8, 16,5]
+      } }
   ]
 };
 
@@ -1017,24 +1282,29 @@ const SG_FALLBACK = {type:"FeatureCollection",features:[
   ]]}}
 ]};
 let fbActive=false;
+function setVectorLayers(vis){
+  VECTOR_LAYERS.forEach(id=>{ try{ if(map.getLayer(id)) map.setLayoutProperty(id,'visibility',vis); }catch(e){} });
+}
 function showFallbackLand(){
   if(fbActive || !map) return; fbActive=true;
   try{
-    if(map.getLayer('water')) map.setLayoutProperty('water','visibility','none');
-    map.setPaintProperty('land','background-color','#8ecdec');           // sea blue
+    setVectorLayers('none');                                             // every tile-driven layer off
+    map.setPaintProperty('land','background-color',MAP_C.water);         // sea blue
     if(!map.getSource('sgfallback')) map.addSource('sgfallback',{type:'geojson',data:SG_FALLBACK});
     if(!map.getLayer('sgfallback-fill')) map.addLayer({id:'sgfallback-fill',type:'fill',source:'sgfallback',
-      paint:{'fill-color':'#bfe3a0','fill-outline-color':'#86c46a'}});   // green land
+      paint:{'fill-color':MAP_C.land,'fill-outline-color':'#86c46a'}});  // green land
+    if(!map.getLayer('sgfallback-shore')) map.addLayer({id:'sgfallback-shore',type:'line',source:'sgfallback',
+      paint:{'line-color':MAP_C.shore,'line-width':3,'line-blur':1}});   // same sandy edge as the real map
   }catch(err){}
 }
 // Revert the fallback once the real vector tiles have loaded.
 function undoFallback(){
   if(!fbActive || !map) return; fbActive=false;
   try{
-    if(map.getLayer('sgfallback-fill')) map.removeLayer('sgfallback-fill');
+    ['sgfallback-shore','sgfallback-fill'].forEach(id=>{ if(map.getLayer(id)) map.removeLayer(id); });
     if(map.getSource('sgfallback')) map.removeSource('sgfallback');
-    map.setPaintProperty('land','background-color','#bfe3a0');            // land green again
-    if(map.getLayer('water')) map.setLayoutProperty('water','visibility','visible');
+    map.setPaintProperty('land','background-color',MAP_C.land);           // land green again
+    setVectorLayers('visible');
   }catch(err){}
 }
 
@@ -1081,11 +1351,35 @@ function initMap(){
     el.addEventListener('click',(e)=>{ e.stopPropagation(); openPanel(i); });
     new maplibregl.Marker({element:el,anchor:'bottom'})
       .setLngLat([site.coords[1],site.coords[0]]).addTo(map);
-    markers.push({el, habitats: site.habitats || []});
+    markers.push({
+      el,
+      lngLat: [site.coords[1],site.coords[0]],
+      habitats: site.habitats || [],
+      on: true         // set by refreshMarkers(); faded pins are dimmed and unclickable
+    });
   });
   buildLegend();
+  // Nameplates are positioned in CSS relative to their own pin, so there is nothing to
+  // recompute on move, zoom or resize.
 }
 
+/* ---- Nameplate placement -------------------------------------------------
+   Every nameplate sits in the same place: centred just under its own pin. A label
+   that jumps above, left or right depending on which neighbours happen to be near
+   reads as a bug rather than a feature, so consistency wins here.
+
+   Nothing needs to run per frame. The plate is positioned in CSS relative to the
+   .gpin box (.pin-label { top:44px; transform:translateX(-50%) }), so it follows its
+   marker on pan, zoom and resize for free.
+
+   v2.5.0's screen-space declutter pass (labelSpots/placeLabels/queueLabels, and the
+   declutter-check.cjs harness that guarded it) lived here and was retired in v2.9.0.
+   It existed because all fourteen plates were visible at once and overlapped each
+   other. Since v2.8.0 only the hovered pin shows a plate, so plate-on-plate overlap
+   cannot happen; a revealed plate may briefly cross a neighbouring pin, which is the
+   accepted cost of putting every label in the same predictable spot. If plates are
+   ever made permanently visible again, that pass is the thing to bring back.
+   -------------------------------------------------------------------------- */
 /* ---- Habitat legend + filter ---- */
 function buildLegend(){
   let html = '<div class="leg-title">Habitats</div>';
@@ -1107,6 +1401,7 @@ function refreshMarkers(){
     else { on = true; clickable = true; }
     m.el.style.opacity = on ? '1' : '0.22';
     m.el.style.pointerEvents = clickable ? 'auto' : 'none';
+    m.on = on;
   });
 }
 function toggleHabitat(k){
@@ -1118,6 +1413,98 @@ function toggleHabitat(k){
 }
 
 /* ---- Site panel ---- */
+/* Habitat chips double as a filter for the species list on the site page.
+   Each species carries a `habs` array of habitat keys; `siteHab` is the one the
+   reader has picked, or null for "show everything". The map pins and the legend
+   filter are deliberately untouched by this — it is a filter *within* the site. */
+function visibleIdx(){
+  if(!currentSite) return [];
+  return currentSite.species
+    .map((_,i)=>i)
+    .filter(i=>!siteHab || (currentSite.species[i].habs||[]).includes(siteHab));
+}
+function renderHabChips(){
+  document.getElementById('panelHabitats').innerHTML = (currentSite.habitats||[]).map(k=>{
+    const h = HABITATS[k]; if(!h) return '';
+    const on = siteHab===k;
+    return `<button type="button" class="hchip${on?' active':''}" data-hab="${k}"
+        aria-pressed="${on}" onclick="filterSiteHab('${k}')">
+        <span class="ic" style="background:${h.color}"><svg viewBox="0 0 24 24">${h.icon}</svg></span>
+        ${h.label}</button>`;
+  }).join('');
+}
+/* Depth profile. Species carry `depth:[min,max]` in metres; negative means above the
+   waterline. Only habitats flagged `depth:true` in HABITATS draw one — a mangrove or a
+   mudflat has no vertical range worth a scale. Species are clustered into bands by the
+   midpoint of their range, and a band holding several species scrolls sideways. */
+function depthBands(idxs){
+  const rows = idxs.map(i=>{
+    const d = currentSite.species[i].depth || [0,0];
+    return { i, lo:d[0], hi:d[1], mid:(d[0]+d[1])/2 };
+  }).sort((a,b)=>a.mid-b.mid);
+  // Tolerance widens with the spread, so a deep habitat does not shatter into many bands.
+  const span = rows.length ? rows[rows.length-1].mid - rows[0].mid : 0;
+  const tol  = Math.max(0.8, span*0.08);
+  const bands = [];
+  for(const r of rows){
+    const last = bands[bands.length-1];
+    if(last && r.mid - last.mid <= tol){
+      last.items.push(r.i);
+      last.lo = Math.min(last.lo, r.lo);
+      last.hi = Math.max(last.hi, r.hi);
+      last.mid = (last.mid*(last.items.length-1) + r.mid) / last.items.length;
+    } else {
+      bands.push({ mid:r.mid, lo:r.lo, hi:r.hi, items:[r.i] });
+    }
+  }
+  return bands;
+}
+const mFmt = v => String(Math.round(v*10)/10);
+function depthLabel(b){
+  if(b.hi <= 0) return 'above water';
+  const lo = Math.max(0, b.lo);
+  return lo===b.hi ? `${mFmt(lo)} m` : `${mFmt(lo)}–${mFmt(b.hi)} m`;
+}
+function speciesCardHTML(idx){
+  const sp = currentSite.species[idx];
+  return `<div class="sp-card" onclick="openCard(${idx})">
+      <div class="sp-thumb">${FISH_ICON}</div>
+      <div class="sp-meta"><div class="nm">${sp.name}</div><div class="sci">${sp.sci}</div></div>
+    </div>`;                                  // note: the ORIGINAL index, not the filtered one
+}
+function renderSpecies(){
+  const box = document.getElementById('speciesItems');
+  const idxs = visibleIdx();
+  const h = siteHab && HABITATS[siteHab];
+  const byDepth = !!(h && h.depth && idxs.length);   // mangroves and mudflats keep the plain grid
+
+  box.className = byDepth ? 'depth-prof' : 'sp-grid';
+  if(!idxs.length){
+    box.innerHTML = `<div class="sp-empty">No species tagged for this habitat yet.</div>`;
+  } else if(byDepth){
+    const bands = depthBands(idxs);
+    box.innerHTML = bands.map((b,n)=>{
+      // Space bands apart in proportion to the real gap between them, so the distance
+      // down the page carries meaning. Clamped so a big jump cannot blow out the panel.
+      const gap = n ? Math.min(80, Math.max(10, Math.round((b.mid - bands[n-1].mid)*14))) : 0;
+      return `<div class="depth-band" style="margin-top:${gap}px">
+          <div class="depth-lab">${depthLabel(b)}</div>
+          <div class="depth-lane">${b.items.map(speciesCardHTML).join('')}</div>
+        </div>`;
+    }).join('');
+  } else {
+    box.innerHTML = idxs.map(speciesCardHTML).join('');
+  }
+  document.getElementById('speciesHead').textContent =
+    h ? `Who lives here — ${h.label}` : 'Who lives here';
+}
+// Tapping the active chip again clears the filter.
+function filterSiteHab(k){
+  siteHab = (siteHab===k) ? null : k;
+  renderHabChips();
+  renderSpecies();
+}
+
 function openPanel(i){
   currentSite = SITES[i];
   selectedIndex = i;
@@ -1128,21 +1515,10 @@ function openPanel(i){
   document.getElementById('siteHeroMedia').innerHTML =
     `<div class="hero-ph">${PHOTO_ICON}<span>Add a photo or clip of this shore</span></div>`;
 
-  document.getElementById('panelHabitats').innerHTML = (currentSite.habitats||[]).map(k=>{
-    const h = HABITATS[k]; if(!h) return '';
-    return `<span class="hchip"><span class="dot" style="background:${h.color}"></span>${h.label}</span>`;
-  }).join('');
+  siteHab = null;              // every site opens showing all of its species
+  renderHabChips();
+  renderSpecies();
 
-  const box = document.getElementById('speciesItems');
-  box.innerHTML = '';
-  currentSite.species.forEach((sp,idx)=>{
-    const c = document.createElement('div');
-    c.className = 'sp-card';
-    c.onclick = ()=>openCard(idx);
-    c.innerHTML = `<div class="sp-thumb">${FISH_ICON}</div>
-      <div class="sp-meta"><div class="nm">${sp.name}</div><div class="sci">${sp.sci}</div></div>`;
-    box.appendChild(c);
-  });
   document.getElementById('panel').classList.add('open');
   refreshMarkers();
   if(map){
@@ -1189,6 +1565,8 @@ const TIER_PLAIN = {
 const ROW_H = 28, ROW_GAP = 8, ROW_PITCH = ROW_H + ROW_GAP;
 const fmtLv = x => Number.isInteger(x) ? String(x) : x.toFixed(1);
 const CHEV = '<svg class="tro-chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+// The verb switches between "Tap" and "Click" in CSS, on a pointer media query.
+const SCI_CTA = '<span class="lbl-shut"><span class="verb-tap">Tap</span><span class="verb-click">Click</span> for the science</span><span class="lbl-open">Close</span>';
 
 const MINI_GRAZ = TIERS.map(x=>`<div class="tro-bar" style="width:${MINI_W[x.key]}%"></div>`).join('');
 const MINI_DETR = `<div class="tro-bar"></div><div class="tro-up">&#8593;</div>`+
@@ -1247,7 +1625,7 @@ function grazingPanel(sp,t,tier){
         <div class="tro-mini">${mini}</div>
         <div class="tro-name">${tier.label}</div>
         <div class="tro-desc">${TIER_PLAIN[tier.key]}</div>
-        <div class="tro-more">${CHEV}<span class="lbl-shut">Tap for the science</span><span class="lbl-open">Close</span></div>
+        <div class="tro-more">${CHEV}${SCI_CTA}</div>
       </summary>
       <div class="tro-sci">
         <div class="tro-scale" style="height:${scaleH}px">
@@ -1282,7 +1660,7 @@ function detritalPanel(sp,t){
         </div>
         <div class="tro-name">Recycler</div>
         <div class="tro-desc">Feeds on dead matter and the microbes on it, returning nutrients to the plants.</div>
-        <div class="tro-more">${CHEV}<span class="lbl-shut">Tap for the science</span><span class="lbl-open">Close</span></div>
+        <div class="tro-more">${CHEV}${SCI_CTA}</div>
       </summary>
       <div class="tro-sci">
         <div class="tro-dchain">
@@ -1311,17 +1689,23 @@ function openCard(idx){
   currentIndex = idx;
   const sp = currentSite.species[idx];
 
-  // Media slot
+  // Media slot. Four kinds are supported: "file" (a local video), "embed" (YouTube or
+  // Vimeo player URL), "image" (a still photo), or empty (the placeholder). An optional
+  // `credit` string is shown as an attribution strip along the bottom.
   const media = document.getElementById('cardMedia');
-  if(sp.media && sp.media.type==='file' && sp.media.src){
-    media.innerHTML = `<video src="${sp.media.src}" controls autoplay muted loop playsinline></video>`;
-  } else if(sp.media && sp.media.type==='embed' && sp.media.src){
-    media.innerHTML = `<iframe src="${sp.media.src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+  const md = sp.media || {};
+  const credit = md.credit ? `<div class="media-credit">${md.credit}</div>` : '';
+  if(md.type==='file' && md.src){
+    media.innerHTML = `<video src="${md.src}"${md.poster?` poster="${md.poster}"`:''} controls autoplay muted loop playsinline></video>${credit}`;
+  } else if(md.type==='embed' && md.src){
+    media.innerHTML = `<iframe src="${md.src}" allow="autoplay; fullscreen" allowfullscreen></iframe>${credit}`;
+  } else if(md.type==='image' && md.src){
+    media.innerHTML = `<img src="${md.src}" alt="${sp.name}" loading="lazy">${credit}`;
   } else {
     media.innerHTML = `<div class="media-placeholder">
         <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.3l5 2.7-5 2.7z"/></svg></div>
         <div class="t">Footage coming soon</div>
-        <div class="s">Drop a clip of the ${sp.name.toLowerCase()} in here — add a file path or an embed link in the data section of this file.</div>
+        <div class="s">Drop a clip or photo of the ${sp.name.toLowerCase()} in here — set its <code>media</code> field in the data section of this file.</div>
       </div>`;
   }
 
@@ -1352,8 +1736,16 @@ function openCard(idx){
   document.getElementById('overlay').classList.add('open');
 }
 function closeCard(){ document.getElementById('overlay').classList.remove('open'); }
-function nextSpecies(){ openCard((currentIndex+1)%currentSite.species.length); }
-function prevSpecies(){ openCard((currentIndex-1+currentSite.species.length)%currentSite.species.length); }
+// Card nav walks whatever the site page is currently showing, so arrowing through
+// a filtered list does not wander into species the reader has filtered out.
+function stepSpecies(d){
+  const idxs = visibleIdx();
+  if(!idxs.length) return;
+  const at = idxs.indexOf(currentIndex);
+  openCard(idxs[((at<0?0:at) + d + idxs.length) % idxs.length]);
+}
+function nextSpecies(){ stepSpecies(1); }
+function prevSpecies(){ stepSpecies(-1); }
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ closeCard(); }
