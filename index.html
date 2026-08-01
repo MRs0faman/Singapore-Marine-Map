@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SG Marine Map — version 2.9.0 -->
+<!-- SG Marine Map — version 3.0.0 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -47,28 +47,118 @@
 
   /* ---------- Layout ---------- */
   .app{display:flex;flex-direction:column;height:100vh;}
-  header.topbar{
-    flex:0 0 auto;
-    display:flex;align-items:center;gap:14px;
-    padding:16px 24px;
-    background:var(--card);
-    border-bottom:1px solid var(--line);
-    z-index:500;
+  /* Title card and stat card. Both float over the map in the same treatment as the
+     legend — white, 16px radius, hairline border, shared shadow — so the four things
+     resting on the map (title, legend, controls, stats) read as one set. */
+  .titlecard{
+    position:absolute;left:20px;top:20px;z-index:500;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:14px 18px 15px;box-shadow:var(--shadow);
+    max-width:min(430px,calc(100% - 40px));
   }
-  .logo{
-    width:42px;height:42px;border-radius:12px;flex:0 0 auto;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    display:flex;align-items:center;justify-content:center;font-size:22px;
+  .tc-row{display:flex;align-items:center;gap:16px;}
+  .titlecard h1{font-size:1.2rem;margin:0;font-weight:700;letter-spacing:.2px;line-height:1.2;}
+  .titlecard p{margin:5px 0 0;font-size:.84rem;color:var(--ink-soft);line-height:1.45;}
+  /* Solid, no gradient. */
+  .about-btn{margin-left:auto;flex:0 0 auto;font-family:inherit;font-size:.78rem;font-weight:600;
+    color:#fff;background:var(--accent);border:0;padding:7px 15px;border-radius:999px;
+    cursor:pointer;white-space:nowrap;transition:background .15s ease,transform .15s ease;}
+  .about-btn:hover{background:#3f8aa1;transform:translateY(-1px);}
+  .about-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .statcard{
+    position:absolute;right:20px;bottom:20px;z-index:450;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:11px 20px;box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:16px;
+    font-size:.82rem;color:var(--ink-soft);white-space:nowrap;
   }
-  .titles h1{font-size:1.25rem;margin:0;font-weight:700;letter-spacing:.2px;}
-  .titles p{margin:2px 0 0;font-size:.85rem;color:var(--ink-soft);}
-  .topbar .hint{margin-left:auto;font-size:.82rem;color:var(--ink-soft);
-    background:var(--panel);border:1px solid var(--line);padding:8px 14px;border-radius:999px;}
+  .statcard b{font-weight:700;color:var(--ink);font-size:.98rem;}
+  .statcard .sep{width:1px;height:20px;background:var(--line);}
+
+  /* About & sources modal. Reuses .overlay / .card; the body is plain prose. */
+  .about-body{padding:26px 30px 30px;overflow:auto;}
+  .about-body h2{margin:0 0 6px;font-size:1.35rem;}
+  .about-body .lede{margin:0 0 20px;color:var(--ink-soft);font-size:.92rem;line-height:1.6;}
+  .about-body h3{margin:22px 0 7px;font-size:.78rem;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--accent);font-weight:700;}
+  .about-body p{margin:0 0 10px;font-size:.9rem;line-height:1.62;}
+  .about-body ul{margin:0 0 10px;padding-left:20px;font-size:.9rem;line-height:1.62;}
+  .about-body li{margin-bottom:5px;}
+  .about-body a{color:var(--accent);}
+  .about-note{background:var(--sand);border-radius:12px;padding:13px 16px;margin:14px 0 0;}
+  .about-note p{margin:0;font-size:.87rem;}
+  .about-note b{color:var(--ink);}
 
   .stage{flex:1 1 auto;position:relative;min-height:0;}
   #map{position:absolute;inset:0;background:var(--sea);}
   .maplibregl-map{background:var(--sea);}
-  .maplibregl-ctrl-attrib{font-size:.65rem;}
+
+  /* ---------- Map chrome ----------
+     MapLibre's stock controls are a 29px white box with hairline borders and system
+     glyphs — visibly from a different kit than everything else here. These rules
+     rebuild them in the app's own language: circles at a real touch size, the shared
+     soft shadow, Fredoka, and + / − drawn with the same round-capped 2.3px stroke as
+     the habitat icons. The zoom pair is moved to sit directly above the legend so the
+     map has one chrome column on the left rather than controls scattered in three
+     corners. */
+
+  /* Position: stacked above the legend. --legend-h must track .legend's rendered
+     height (8 habitat rows + title + "show all"); if you add a habitat, update it. */
+  :root{ --legend-h:461px; }
+  .maplibregl-ctrl-bottom-left{ left:20px; bottom:calc(var(--legend-h) + 34px);
+    display:flex;flex-direction:row;gap:10px;align-items:center; }
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl{ margin:0; }
+  /* Attribution lives top-right, on its own. */
+  .maplibregl-ctrl-top-right{ top:20px; right:20px; }
+  .maplibregl-ctrl-top-right .maplibregl-ctrl{ margin:0; }
+
+  /* Separate circles in a row rather than one divided box. */
+  .maplibregl-ctrl-group,
+  .maplibregl-ctrl-group:not(:empty){background:none;border:0;box-shadow:none;border-radius:0;
+    display:flex;flex-direction:row;gap:10px;}
+  .maplibregl-ctrl-group button,
+  .maplibregl-ctrl-group button + button{
+    width:42px;height:42px;border-radius:50%;background:var(--card);
+    border:1px solid var(--line);box-shadow:var(--shadow);
+    transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;}
+  .maplibregl-ctrl-group button:hover{border-color:var(--accent);transform:translateY(-1px);}
+  .maplibregl-ctrl-group button:focus,
+  .maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:var(--shadow);outline:none;}
+  .maplibregl-ctrl-group button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .maplibregl-ctrl-group button:disabled{opacity:.4;}
+  .maplibregl-ctrl-group button span.maplibregl-ctrl-icon{
+    background-repeat:no-repeat;background-position:center;background-size:21px 21px;}
+  .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232b3d46' stroke-width='2.3' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E");}
+  .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232b3d46' stroke-width='2.3' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");}
+  .maplibregl-ctrl button.maplibregl-ctrl-zoom-in:hover .maplibregl-ctrl-icon{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f9db5' stroke-width='2.3' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E");}
+  .maplibregl-ctrl button.maplibregl-ctrl-zoom-out:hover .maplibregl-ctrl-icon{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f9db5' stroke-width='2.3' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");}
+
+  /* Reset view. Same circle as the zoom pair, but its glyph is a real inline SVG
+     rather than a background-image, so it needs its own stroke rules. */
+  .reset-btn svg{width:20px;height:20px;display:block;margin:auto;fill:none;
+    stroke:var(--ink);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;
+    transition:stroke .15s ease;}
+  .maplibregl-ctrl-group button.reset-btn:hover svg{stroke:var(--accent);}
+
+  /* Attribution: same card treatment, muted, out of the way but still legible. */
+  .maplibregl-ctrl-attrib{font-family:inherit;font-size:.65rem;color:var(--ink-soft);
+    background:rgba(255,255,255,.82);border-radius:999px;box-shadow:var(--shadow);
+    padding:3px 10px;}
+  .maplibregl-ctrl-attrib a{color:var(--ink-soft);}
+  .maplibregl-ctrl-attrib.maplibregl-compact{padding:3px 26px 3px 11px;min-height:26px;}
+  .maplibregl-ctrl-attrib-button{width:24px;height:24px;border-radius:50%;background:var(--panel);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d7480' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5M12 7.6v.1'/%3E%3C/svg%3E");
+    background-size:15px 15px;background-position:center;background-repeat:no-repeat;}
+  .maplibregl-ctrl-attrib-button:hover{background-color:var(--line);}
+  /* Not enough height to stack above the legend — sit beside it instead. */
+  @media (max-height:660px){
+    .maplibregl-ctrl-bottom-left{bottom:20px;left:calc(20px + 272px + 14px);}
+  }
 
   /* ---------- Habitat pins ---------- */
   .marker{will-change:transform;transition:opacity .2s;z-index:2;}
@@ -105,7 +195,7 @@
 
   /* ---------- Site page (slide-in) ---------- */
   .panel{
-    position:absolute;top:0;right:0;height:100%;width:clamp(400px,56vw,800px);max-width:100%;
+    position:absolute;top:0;right:0;height:100%;width:clamp(420px,70vw,1120px);max-width:100%;
     background:var(--card);border-left:1px solid var(--line);
     box-shadow:var(--shadow);
     transform:translateX(103%);transition:transform .34s cubic-bezier(.4,.0,.2,1);
@@ -119,12 +209,12 @@
     cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(43,61,70,.22);
   }
   .close-btn:hover{background:#fff;}
-  .site-hero-media{width:100%;aspect-ratio:16/7;background:linear-gradient(135deg,var(--sea),var(--accent-2));
+  /* Empty media reads as an unfilled slot rather than decoration: black, white label,
+     no icon. Same treatment on the site hero, the species card and the gallery thumbs. */
+  .site-hero-media{width:100%;aspect-ratio:16/7;background:#000;
     display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid var(--line);}
   .site-hero-media video,.site-hero-media img{width:100%;height:100%;object-fit:cover;display:block;}
-  .hero-ph{display:flex;flex-direction:column;align-items:center;gap:9px;color:rgba(255,255,255,.92);text-align:center;padding:16px;}
-  .hero-ph svg{width:42px;height:42px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.92;}
-  .hero-ph span{font-size:.86rem;font-weight:500;}
+  .hero-ph{color:#fff;text-align:center;padding:16px;font-size:.9rem;font-weight:500;letter-spacing:.01em;}
   .site-hero-text{padding:22px 30px 6px;}
   .site-hero-text .kicker{font-size:.74rem;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:700;}
   .site-hero-text h2{margin:6px 0 8px;font-size:2rem;line-height:1.1;}
@@ -134,8 +224,8 @@
   .sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}
   .sp-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:.15s;}
   .sp-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow);}
-  .sp-thumb{aspect-ratio:4/3;background:linear-gradient(135deg,#cfe6ef,#9fd2c4);display:flex;align-items:center;justify-content:center;}
-  .sp-thumb svg{width:36px;height:36px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
+  .sp-thumb{aspect-ratio:4/3;background:#000;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:.7rem;font-weight:500;text-align:center;padding:8px;line-height:1.35;}
   .sp-meta{padding:11px 13px 13px;}
   .sp-meta .nm{font-weight:600;font-size:.94rem;line-height:1.25;}
   .sp-meta .sci{font-size:.75rem;color:var(--ink-soft);font-style:italic;margin-top:3px;}
@@ -159,6 +249,7 @@
   }
   .overlay.open{opacity:1;pointer-events:auto;}
   .card{
+    position:relative;   /* .close-btn is absolute — without this it anchors to .overlay */
     background:var(--card);border-radius:var(--radius);width:640px;max-width:100%;
     max-height:88vh;overflow:hidden;box-shadow:var(--shadow);
     display:flex;flex-direction:column;transform:translateY(14px) scale(.98);transition:.25s;
@@ -166,20 +257,13 @@
   .overlay.open .card{transform:none;}
 
   /* Video / media slot */
-  .media{position:relative;background:var(--sea);aspect-ratio:16/9;width:100%;overflow:hidden;
+  .media{position:relative;background:#000;aspect-ratio:16/9;width:100%;overflow:hidden;
     display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);}
   .media video,.media iframe,.media img{width:100%;height:100%;border:0;display:block;object-fit:cover;}
   .media-credit{position:absolute;left:0;right:0;bottom:0;padding:5px 10px;
     background:linear-gradient(transparent,rgba(43,61,70,.62));
     color:rgba(255,255,255,.94);font-size:.68rem;text-align:right;pointer-events:none;}
-  .media-placeholder{
-    text-align:center;color:var(--accent);padding:20px;
-    display:flex;flex-direction:column;align-items:center;gap:8px;
-  }
-  .media-placeholder .ic{opacity:.7;display:flex;}
-  .media-placeholder .ic svg{width:42px;height:42px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
-  .media-placeholder .t{font-weight:600;font-size:.95rem;color:var(--ink);}
-  .media-placeholder .s{font-size:.8rem;color:var(--ink-soft);max-width:340px;line-height:1.5;}
+  .media-placeholder{text-align:center;color:#fff;padding:20px;font-size:.95rem;font-weight:500;}
 
   .card-body{padding:22px 24px 26px;overflow-y:auto;}
   .card-title{display:flex;align-items:flex-start;gap:14px;margin-bottom:4px;}
@@ -341,10 +425,18 @@
 
   @media (max-width:560px){
     .panel{width:100%;}
-    header.topbar{padding:12px 16px;}
-    .titles h1{font-size:1.05rem;}
-    .topbar .hint{display:none;}
+    .titlecard{left:14px;top:14px;padding:12px 15px 13px;max-width:calc(100% - 28px);}
+    .titlecard h1{font-size:1.05rem;}
+    .titlecard p{font-size:.78rem;}
+    .tc-row{gap:12px;}
+    .about-btn{padding:6px 13px;font-size:.75rem;}
+    .about-body{padding:22px 20px 26px;}
+    .statcard{right:14px;bottom:14px;padding:9px 14px;gap:12px;font-size:.75rem;}
+    .statcard b{font-size:.9rem;}
+    .maplibregl-ctrl-top-right{top:14px;right:14px;}
     .legend{display:none;}
+    /* No legend to sit above, so the zoom pair drops to the bottom corner. */
+    .maplibregl-ctrl-bottom-left{bottom:20px;}
     /* Narrower depth scale so the species lane keeps its width on a phone. */
     .depth-prof::before{left:46px;}
     .depth-band{grid-template-columns:46px 1fr;}
@@ -371,17 +463,21 @@
 </head>
 <body>
 <div class="app">
-  <header class="topbar">
-    <div class="titles">
-      <h1>Singapore's Living Waters</h1>
-      <p>Tap a spot on the map to meet the marine life that lives there</p>
-    </div>
-    <div class="hint">Pinch or scroll to zoom · drag to explore</div>
-  </header>
-
   <div class="stage">
     <div id="map"></div>
     <div class="offline-note" id="offlineNote">Map tiles need an internet connection to load. The pins and species cards still work — connect to the internet to see the map background.</div>
+
+    <!-- Title card. Floats over the map top-left in the same card treatment as the legend. -->
+    <div class="titlecard">
+      <div class="tc-row">
+        <h1>Singapore's Living Waters</h1>
+        <button type="button" class="about-btn" onclick="openAbout()">About</button>
+      </div>
+      <p>An interactive guide to the marine life of our shores</p>
+    </div>
+
+    <!-- Scale, bottom-right, above the attribution. Filled by renderStats() from the data. -->
+    <div class="statcard" id="topStats"></div>
 
     <div class="legend" id="habLegend"></div>
 
@@ -425,6 +521,63 @@
             <button onclick="prevSpecies()">Previous</button>
             <button onclick="nextSpecies()">Next animal</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- About & sources. Separate overlay from the species card so neither closes the
+         other; the ISM methods note lives here rather than only in the write-up. -->
+    <div class="overlay" id="aboutOverlay" onclick="if(event.target===this)closeAbout()">
+      <div class="card">
+        <button class="close-btn" onclick="closeAbout()" aria-label="Close">×</button>
+        <div class="about-body">
+          <h2>Singapore's Living Waters</h2>
+          <p class="lede">An interactive guide to the animals living along Singapore's
+            shores, reefs, mangroves and seagrass meadows. Built as an independent study
+            module, for readers from primary school upwards.</p>
+
+          <h3>How to use it</h3>
+          <p>Every pin is a real dive or shore site. Open one to read about the place and
+            meet the animals recorded there. Inside a site, tap a habitat tag to see only
+            the species that live in it — for coral reefs, seagrass meadows and seawalls
+            you will also get a depth profile showing roughly where each animal sits in the
+            water column. The legend on the map filters the pins by habitat.</p>
+          <p>Every species card ends with its place in the food chain: a plain-English
+            summary first, and the trophic level, formula and worked arithmetic one tap
+            deeper.</p>
+
+          <h3>Where the data comes from</h3>
+          <ul>
+            <li>Trophic levels for fish: <a href="https://www.fishbase.se" target="_blank" rel="noopener">FishBase</a></li>
+            <li>Invertebrates: <a href="https://www.sealifebase.ca" target="_blank" rel="noopener">SeaLifeBase</a> and the feeding-ecology literature</li>
+            <li>Map data: &copy; OpenStreetMap contributors, served by OpenFreeMap, drawn with MapLibre GL JS</li>
+            <li>Sites and species selected from Singapore shore and reef survey material</li>
+          </ul>
+
+          <h3>What is measured and what is estimated</h3>
+          <p>Not every number here carries the same weight, and it matters which is which.</p>
+          <ul>
+            <li><b>Strongest.</b> FishBase trophic levels marked "based on food items" come
+              from real diet studies — the archerfish, clown anemonefish, titan triggerfish,
+              copperband butterflyfish, bluespotted ribbontail ray and blacktip reef shark.</li>
+            <li><b>Weaker.</b> FishBase values "based on size and trophs of closest
+              relatives" are estimates, not measurements. The giant mudskipper, spotted
+              seahorse and estuarine stonefish are in this group.</li>
+            <li><b>Guild-based.</b> Most invertebrates have no published species-level
+              value, so they are placed by feeding guild: suspension feeders around 2.1–2.2,
+              deposit feeders around 2.0–2.2, predatory invertebrates around 3.0–3.3.</li>
+          </ul>
+
+          <div class="about-note">
+            <p><b>Depth ranges are placeholders.</b> Only two species in this guide had a
+              depth in their source material. The rest were assigned from their habitat as
+              working estimates while the guide is built, and should not be quoted as
+              measurements.</p>
+          </div>
+
+          <h3>Images and footage</h3>
+          <p>Species media is still being gathered. Where a photograph or clip appears, its
+            source and licence are credited on the frame.</p>
         </div>
       </div>
     </div>
@@ -775,7 +928,7 @@ const SITES = [
     ]
   },
   {
-    name:"Changi Beach Intertidal",
+    name:"Changi Beach",
     coords:[1.3894,103.9906],
     habitats:["sandy","seagrass","intertidal"],
     blurb:"A long, gentle low-tide flat on the northern coast. As the water pulls back, sea stars, sand dollars and sea pens appear on the sand.",
@@ -1189,8 +1342,6 @@ function habBadge(k){
 }
 
 // Placeholder icons for the site page hero (camera) and species thumbnails (fish).
-const PHOTO_ICON = '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.6"/><path d="M8.5 7 10 4.5h4L15.5 7"/></svg>';
-const FISH_ICON = '<svg viewBox="0 0 24 24"><path d="M4 12c2.5-4 7-5.6 11-4.6 1.1.3 2.1.8 3 1.4l3.4-2.3-.9 3.9.9 3.9-3.4-2.3c-.9.6-1.9 1.1-3 1.4-4 1-8.5-.6-11-4.6z"/><circle cx="7.6" cy="11.3" r=".8"/></svg>';
 
 // Cartoon vector style: land is the green background, water is painted blue on top,
 // and a few OpenMapTiles landcover classes add texture so the island is not one flat
@@ -1308,25 +1459,83 @@ function undoFallback(){
   }catch(err){}
 }
 
+/* The framing every "show me Singapore" camera move uses. It used to be written out
+   at three call sites, which meant three places to keep in sync; it is one now.
+   When the site panel is open the right-hand padding grows by the panel width so the
+   islands sit in the visible strip rather than behind it. */
+const FRAME_BOUNDS = [[103.60,1.15],[104.02,1.46]];
+
+/* Panning fence: Singapore and its islands plus an even 0.10-degree ring on every side.
+   Also handed to the map constructor as maxBounds.
+
+   It has to come off while the site panel is open. The panel takes 70% of the width, so
+   fitting FRAME_BOUNDS into the strip beside it wants about zoom 9.33 — a much wider view
+   than the fence permits — and with the fence on the camera clamps part-way through the
+   ease and the map jerks instead of sliding. openPanel drops it; closePanel restores it
+   once the return animation has settled, so it is only ever off while a panel covers the
+   map. `minZoom` is 9.3 for the same reason: with the fence on, MapLibre already stops
+   you zooming out at about 10.46, so that floor is only ever reached with a panel open. */
+const MAP_FENCE = [[103.48,1.05],[104.20,1.58]];
+
+function frameMap(duration=600){
+  if(!map) return;
+  const panel = document.getElementById('panel');
+  const open  = panel && panel.classList.contains('open');
+  const pw    = open ? panel.getBoundingClientRect().width : 0;
+  map.fitBounds(FRAME_BOUNDS, {
+    padding: open ? {top:24,right:pw+24,bottom:24,left:24} : 40,
+    duration
+  });
+}
+
+/* Reset view — a third circle under the zoom pair. MapLibre has no built-in for this,
+   so it is a minimal custom control: anything with onAdd/onRemove will do. */
+const RESET_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M4 9V5.6A1.6 1.6 0 0 1 5.6 4H9"/><path d="M15 4h3.4A1.6 1.6 0 0 1 20 5.6V9"/>
+  <path d="M20 15v3.4a1.6 1.6 0 0 1-1.6 1.6H15"/><path d="M9 20H5.6A1.6 1.6 0 0 1 4 18.4V15"/>
+  <circle cx="12" cy="12" r="2.3"/></svg>`;
+const resetViewControl = {
+  onAdd(){
+    const d = document.createElement('div');
+    d.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    d.innerHTML = `<button type="button" class="reset-btn" title="Back to Singapore"
+        aria-label="Back to Singapore">${RESET_ICON}</button>`;
+    d.querySelector('button').addEventListener('click', ()=>frameMap(700));
+    this._el = d;
+    return d;
+  },
+  onRemove(){ if(this._el) this._el.remove(); }
+};
+
 function initMap(){
   map = new maplibregl.Map({
     container:'map',
     style:CARTOON_STYLE,
-    center:[103.83,1.29], zoom:10.6, minZoom:10, maxZoom:16,
-    maxBounds:[[103.35,1.02],[104.55,1.58]],
+    center:[103.83,1.29], zoom:10.6, minZoom:9.3, maxZoom:16,
+    // Panning is fenced to Singapore and its islands plus an even 0.10-degree ring on
+    // every side — about 11 km of open water, equal left/right and top/bottom (a degree
+    // of longitude and one of latitude differ by well under 1% this close to the equator).
+    // Content spans lng 103.58-104.10 (Tuas to Pulau Tekong) and lat 1.15-1.48 (Raffles
+    // Lighthouse to the north coast). Defined once as MAP_FENCE, because openPanel has
+    // to lift it while the site panel is open.
+    maxBounds:MAP_FENCE,
     attributionControl:false, dragRotate:false, pitchWithRotate:false
   });
   map.touchZoomRotate.disableRotation();
-  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-left');
+  // Zoom pair + reset, in a row above the legend — see .maplibregl-ctrl-bottom-left in the CSS.
+  // Order matters: MapLibre PREPENDS into the bottom-* corners, so whatever is added
+  // last sits first. Reset first, zoom second, giving + / − / reset left to right.
+  map.addControl(resetViewControl,'bottom-left');
+  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-left');
   map.addControl(new maplibregl.AttributionControl({compact:true,
-    customAttribution:'© OpenStreetMap contributors, OpenFreeMap'}));
+    customAttribution:'© OpenStreetMap contributors, OpenFreeMap'}),'top-right');
 
   // When the vector tiles do load (even after a delay or a retry), swap back to the real map.
   map.on('sourcedata',(e)=>{ if(e.sourceId==='openmaptiles' && e.isSourceLoaded) undoFallback(); });
 
   // Fit the whole of Singapore + the southern marine sites in view.
   map.on('load',()=>{
-    map.fitBounds([[103.60,1.15],[104.02,1.46]],{padding:40,duration:0});
+    frameMap(0);
     const loaded=()=>{ try{ return map.isSourceLoaded('openmaptiles'); }catch(e){ return false; } };
     // If the tiles seem stuck, re-fetch the style once — recovers most transient load failures.
     setTimeout(()=>{ if(!loaded() && !fbActive){ try{ map.setStyle(CARTOON_STYLE); }catch(e){} } }, 4500);
@@ -1468,7 +1677,7 @@ function depthLabel(b){
 function speciesCardHTML(idx){
   const sp = currentSite.species[idx];
   return `<div class="sp-card" onclick="openCard(${idx})">
-      <div class="sp-thumb">${FISH_ICON}</div>
+      <div class="sp-thumb">Footage not uploaded</div>
       <div class="sp-meta"><div class="nm">${sp.name}</div><div class="sci">${sp.sci}</div></div>
     </div>`;                                  // note: the ORIGINAL index, not the filtered one
 }
@@ -1513,7 +1722,7 @@ function openPanel(i){
 
   // Site-level hero media slot (drop a photo or clip of the shore here later).
   document.getElementById('siteHeroMedia').innerHTML =
-    `<div class="hero-ph">${PHOTO_ICON}<span>Add a photo or clip of this shore</span></div>`;
+    `<div class="hero-ph">Footage not uploaded</div>`;
 
   siteHab = null;              // every site opens showing all of its species
   renderHabChips();
@@ -1522,17 +1731,22 @@ function openPanel(i){
   document.getElementById('panel').classList.add('open');
   refreshMarkers();
   if(map){
-    // Keep the map full-width; use camera padding to ease Singapore into the space beside the panel (smooth, no resize).
-    const pw = document.getElementById('panel').getBoundingClientRect().width;
-    map.fitBounds([[103.60,1.15],[104.02,1.46]],{padding:{top:24,right:pw+24,bottom:24,left:24},duration:650});
+    // Keep the map full-width; camera padding eases Singapore into the space beside
+    // the panel (smooth, no resize). frameMap reads the panel state itself.
+    // The fence must come off first or the ease clamps — see MAP_FENCE.
+    map.setMaxBounds(null);
+    frameMap(650);
   }
 }
 function closePanel(){
   document.getElementById('panel').classList.remove('open');
   selectedIndex=null; refreshMarkers();
   if(map){
-    // Ease Singapore back to the full-width framing (smooth camera animation, no resize).
-    map.fitBounds([[103.60,1.15],[104.02,1.46]],{padding:40,duration:550});
+    // Ease Singapore back to the full-width framing (smooth camera animation, no resize),
+    // then put the fence back. Restoring it before the ease finishes would clamp the
+    // animation exactly the way it did before MAP_FENCE was made removable.
+    frameMap(550);
+    map.once('moveend', ()=>{ if(selectedIndex===null) map.setMaxBounds(MAP_FENCE); });
   }
 }
 
@@ -1702,11 +1916,7 @@ function openCard(idx){
   } else if(md.type==='image' && md.src){
     media.innerHTML = `<img src="${md.src}" alt="${sp.name}" loading="lazy">${credit}`;
   } else {
-    media.innerHTML = `<div class="media-placeholder">
-        <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.3l5 2.7-5 2.7z"/></svg></div>
-        <div class="t">Footage coming soon</div>
-        <div class="s">Drop a clip or photo of the ${sp.name.toLowerCase()} in here — set its <code>media</code> field in the data section of this file.</div>
-      </div>`;
+    media.innerHTML = `<div class="media-placeholder">Footage not uploaded</div>`;
   }
 
   document.getElementById('cardName').textContent = sp.name;
@@ -1747,14 +1957,31 @@ function stepSpecies(d){
 function nextSpecies(){ stepSpecies(1); }
 function prevSpecies(){ stepSpecies(-1); }
 
+/* About & sources. Its own overlay, so opening it does not disturb a species card. */
+function openAbout(){ document.getElementById('aboutOverlay').classList.add('open'); }
+function closeAbout(){ document.getElementById('aboutOverlay').classList.remove('open'); }
+
+/* Scale, counted from the data rather than typed into the markup, so the banner cannot
+   drift when sites or species are added. Species are counted as entries, not unique
+   names — two species appear at two sites each. */
+function renderStats(){
+  const sites   = SITES.length;
+  const species = SITES.reduce((n,s)=>n + s.species.length, 0);
+  const habs    = Object.keys(HABITATS).length;
+  document.getElementById('topStats').innerHTML =
+    [[sites,'sites'],[habs,'habitats'],[species,'species']]
+      .map(([n,l])=>`<span><b>${n}</b> ${l}</span>`).join('<i class="sep"></i>');
+}
+
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){ closeCard(); }
+  if(e.key==='Escape'){ closeCard(); closeAbout(); }
   if(document.getElementById('overlay').classList.contains('open')){
     if(e.key==='ArrowRight') nextSpecies();
     if(e.key==='ArrowLeft') prevSpecies();
   }
 });
 
+renderStats();
 initMap();
 </script>
 </body>
