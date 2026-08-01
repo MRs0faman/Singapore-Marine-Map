@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- SG Marine Map — version 3.0.0 -->
+<!-- SG Marine Map — version 3.1.0 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -87,6 +87,9 @@
   .about-body li{margin-bottom:5px;}
   .about-body a{color:var(--accent);}
   .about-note{background:var(--sand);border-radius:12px;padding:13px 16px;margin:14px 0 0;}
+  /* Footnote at the foot of the modal — quieter than a note box, but still on the page. */
+  .about-foot{margin:22px 0 0;padding-top:14px;border-top:1px solid var(--line);
+    font-size:.8rem;line-height:1.55;color:var(--ink-soft);}
   .about-note p{margin:0;font-size:.87rem;}
   .about-note b{color:var(--ink);}
 
@@ -532,19 +535,19 @@
         <button class="close-btn" onclick="closeAbout()" aria-label="Close">×</button>
         <div class="about-body">
           <h2>Singapore's Living Waters</h2>
-          <p class="lede">An interactive guide to the animals living along Singapore's
-            shores, reefs, mangroves and seagrass meadows. Built as an independent study
-            module, for readers from primary school upwards.</p>
+          <p class="lede">An interactive guide to the marine life living in Singapore's waters.</p>
+          <p>This project aims to connect Singaporeans with the rich marine biodiversity in
+            our waters by anchoring each organism to a physical location. This is done to
+            show that marine life in Singapore is tangible, diverse and accessible, in hopes
+            of encouraging locals to visit these spots to explore for themselves.</p>
 
-          <h3>How to use it</h3>
-          <p>Every pin is a real dive or shore site. Open one to read about the place and
-            meet the animals recorded there. Inside a site, tap a habitat tag to see only
-            the species that live in it — for coral reefs, seagrass meadows and seawalls
-            you will also get a depth profile showing roughly where each animal sits in the
-            water column. The legend on the map filters the pins by habitat.</p>
-          <p>Every species card ends with its place in the food chain: a plain-English
-            summary first, and the trophic level, formula and worked arithmetic one tap
-            deeper.</p>
+          <h3>How to use</h3>
+          <ul>
+            <li>Pins are real dive or shore sites</li>
+            <li>Choose a type of habitat by choosing from the legend or click directly on a pin</li>
+            <li>Select a site to meet its inhabitants</li>
+            <li>Click into an inhabitant to see its species card and learn more</li>
+          </ul>
 
           <h3>Where the data comes from</h3>
           <ul>
@@ -553,6 +556,33 @@
             <li>Map data: &copy; OpenStreetMap contributors, served by OpenFreeMap, drawn with MapLibre GL JS</li>
             <li>Sites and species selected from Singapore shore and reef survey material</li>
           </ul>
+
+          <!-- ==========================================================================
+               "What is measured and what is estimated" — REMOVED FROM DISPLAY, NOT DELETED.
+
+               Commented out at the owner's request so it can be worked on and reinstated
+               later. Uncomment the block below to restore it exactly as it was; the CSS it
+               needs (.about-note, and the h3/p/ul rules) is all still in the <style> block.
+
+               Why it existed: it is the ISM methods note, living in the app rather than
+               only in the write-up. It separated three classes of trophic value — FishBase
+               "based on food items" (real diet studies), FishBase "based on size and trophs
+               of closest relatives" (estimates), and guild-based assignment for
+               invertebrates (no published species-level value) — and carried the highlighted
+               note that the depth ranges are placeholders.
+
+               Two things to fix before reinstating:
+                 1. It names three species by FishBase common names rather than the app's:
+                    clown anemonefish is False Clownfish, bluespotted ribbontail ray is
+                    Blue-spotted Fantail Ray, spotted seahorse is Estuarine Seahorse. Same
+                    animals, confirmed by scientific name, but a reader cannot find them.
+                 2. It is the longest and most technical part of the modal, and sits above
+                    the reading level of the younger half of the audience. Consider
+                    compressing it, or putting it behind its own expandable section.
+
+               WHILE THIS IS COMMENTED OUT, nothing anywhere in the app tells a reader that
+               the depth values and habitat tags are estimates. See HANDOFF.md.
+               ==========================================================================
 
           <h3>What is measured and what is estimated</h3>
           <p>Not every number here carries the same weight, and it matters which is which.</p>
@@ -575,9 +605,16 @@
               measurements.</p>
           </div>
 
+               ========================================================================== -->
+
           <h3>Images and footage</h3>
           <p>Species media is still being gathered. Where a photograph or clip appears, its
             source and licence are credited on the frame.</p>
+
+          <p class="about-foot">** Depth ranges are working estimates. Only two species in
+            this guide had a depth recorded in their source material; the rest were assigned
+            from their habitat while the guide is being built, and should not be read as
+            measurements.</p>
         </div>
       </div>
     </div>
@@ -751,7 +788,7 @@ const SITES = [
         location:"Pulau Hantu and southern reefs",
         fun:"The bright blue spots warn others that its tail carries a venomous sting.",
         media:{type:"",src:""} },
-      { name:"Funeral Nudibranch", sci:"Jorunna funebris", trophic:{level:3,tier:"secondary"},
+      { name:"Polka-dot Nudibranch", sci:"Jorunna funebris", trophic:{level:3,tier:"secondary"},
         habitat:"Reefs and rocky surfaces where its favourite sponges grow.",
         habs:["reef"],
         depth:[3,12],
@@ -847,7 +884,7 @@ const SITES = [
         location:"Pulau Semakau, southern shores",
         fun:"It lays eggs in a neat little capsule shaped like a pagoda.",
         media:{type:"",src:""} },
-      { name:"Fan Worm", sci:"Sabellastarte spectabilis", trophic:{level:2.1,tier:"primary",detrital:true},
+      { name:"Fanworm", sci:"Sabellastarte spectabilis", trophic:{level:2.1,tier:"primary",detrital:true},
         habitat:"Attached to rocks and reef among sand.",
         habs:["reef"],
         depth:[3,12],
@@ -953,7 +990,7 @@ const SITES = [
         location:"Changi Beach",
         fun:"It's covered in little thorn-like bumps but is completely harmless.",
         media:{type:"",src:""} },
-      { name:"Sea Pen", sci:"Pteroeides sp.", trophic:{level:2.2,tier:"primary",detrital:true},
+      { name:"Spiky Sea Pen", sci:"Pteroeides sp.", trophic:{level:2.2,tier:"primary",detrital:true},
         habitat:"Anchored upright in the soft sandy seabed.",
         habs:["sandy"],
         depth:[1.4,3],
@@ -1203,7 +1240,7 @@ const SITES = [
         location:"Sungei Buloh mangroves",
         fun:"You rarely see it, but its chest-high mud 'volcanoes' are all over the mangrove.",
         media:{type:"",src:""} },
-      { name:"Archerfish", sci:"Toxotes jaculatrix", trophic:{level:2.6,tier:"secondary"},
+      { name:"Banded Archerfish", sci:"Toxotes jaculatrix", trophic:{level:2.6,tier:"secondary"},
         habitat:"Mangrove creeks and estuaries.",
         habs:["mangrove"],
         depth:[0,1.5],
